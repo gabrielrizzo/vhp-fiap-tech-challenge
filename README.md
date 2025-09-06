@@ -1,3 +1,6 @@
+# About Repository
+It's a copy from https://github.com/FIAP/genetic_algorithm_tsp/blob/main/tsp.py in order to do the FIAP's tech challenge. We are going to transform the TSP problem into a VHP by adding restrictions and conditions on fitness function.
+
 # TSP Solver using Genetic Algorithm
 
 This repository contains a Python implementation of a Traveling Salesman Problem (TSP) solver using a Genetic Algorithm (GA). The TSP is a classic problem in the field of combinatorial optimization, where the goal is to find the shortest possible route that visits a set of given cities exactly once and returns to the original city.
