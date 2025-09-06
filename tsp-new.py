@@ -4,7 +4,7 @@ import random
 import itertools
 from genetic_algorithm import mutate, order_crossover, generate_random_population, calculate_fitness, sort_population, default_problems, generate_nearest_neightbor, mutate_hard, uniform_crossover
 from draw_functions import draw_paths, draw_plot, draw_cities
-from selection_functions import random_fitness_probability, championship_selection, rank_based_selection
+from selection_functions import random_fitness_probability, tournament_selection, rank_based_selection
 from helper_functions import (
     get_duplicated_items, 
     lightweight_monitor_diversity, 
@@ -154,6 +154,8 @@ while running:
     new_population = [population[0]]  # Keep the best individual: ELITISM
 
     # Exploration time, running high mutation prob and intensity in the begining
+    # We do it to make the algorithm explore not only optimal solutions, but also other solutions
+    # that are not optimal but are still good or to include a good genetic data.
     if generation > N_EXPLORATION_GENERATION and not finished_exploration:
         print('==== FINISHED EXPLORATION ===')
         mutation_intensity = AFTER_EXPLORATION_MUTATION_INTENSITY
@@ -183,8 +185,8 @@ while running:
 
     population = new_population
 
-    # Adaptive parameter adjustment
-    if generation_without_improvement > 100 and generation > N_EXPLORATION_GENERATION:
+    # Adaptive parameter adjustment Garantee that the algorithm will not get stuck in a local minimum
+    if generation_without_improvement > 100:
         if mutation_intensity < N_CITIES // 2:
             mutation_intensity += 1
             print(f"INCREASING MUTATION INTENSITY TO {mutation_intensity}")

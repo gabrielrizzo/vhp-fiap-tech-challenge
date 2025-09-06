@@ -19,7 +19,7 @@ def get_best_random_parent(population: List[Tuple[float, float]]) -> Tuple[Tuple
 
     return best_parent
 
-def championship_selection(population: List[Tuple[float, float]]) -> Tuple[Tuple[float, float]]:
+def tournament_selection(population: List[Tuple[float, float]]) -> Tuple[Tuple[float, float]]:
     parent1 = get_best_random_parent(population)
     parent2 = get_best_random_parent(population)
 
@@ -46,3 +46,17 @@ def rank_based_selection(population: List[Tuple[float, float]], population_fitne
     parent2_idx = np.random.choice(len(population), p=selection_probs)
     
     return population[parent1_idx], population[parent2_idx]
+
+def tournament_or_rank_based_selection(population: List[Tuple[float, float]], population_fitness: List[float], tournament_prob: float = 0.7) -> Tuple[Tuple[float, float]]:
+    """
+    Tournament selection with a probability of tournament_prob
+    Rank-based selection with a probability of 1 - tournament_prob
+    Tournament selection is used to improve diversity and avoid getting stuck in a local minimum
+    """
+
+    if random.random() < tournament_prob:  
+        parent1, parent2 = tournament_selection(population)
+    else:
+        parent1, parent2 = rank_based_selection(population, population_fitness)
+
+    return parent1, parent2

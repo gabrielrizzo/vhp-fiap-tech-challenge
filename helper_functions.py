@@ -3,8 +3,7 @@ import random
 from typing import List, Tuple
 from genetic_algorithm import generate_nearest_neightbor, calculate_fitness
 from genetic_algorithm import mutate_hard
-from selection_functions import rank_based_selection
-from selection_functions import championship_selection
+from selection_functions import tournament_or_rank_based_selection
 
 def get_duplicated_items(list):
     duplicates = [i for i in set(list) if list.count(i) > 1]
@@ -114,10 +113,10 @@ def fast_diversity_aware_selection(population: List[Tuple[float, float]], popula
     if diversity_level < 0.3:  # Low diversity - use random selection
         return random.choice(population), random.choice(population)
     else:  # Normal diversity - use the random logic to validate which selection will choose
-        if random.random() < 0.4:  
-            parent1, parent2 = championship_selection(population)
-        else:
-            parent1, parent2 = rank_based_selection(population, population_fitness)
+        parent1, parent2 = tournament_or_rank_based_selection(
+            population, population_fitness,
+            tournament_prob=0.4
+        )
     
     return parent1, parent2
 

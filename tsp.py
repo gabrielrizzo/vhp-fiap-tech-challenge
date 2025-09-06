@@ -2,10 +2,9 @@ import pygame
 from pygame.locals import *
 import random
 import itertools
-from genetic_algorithm import mutate, order_crossover, generate_random_population, calculate_fitness, sort_population, default_problems, generate_nearest_neightbor, mutate_hard, uniform_crossover
+from genetic_algorithm import order_crossover, generate_random_population, calculate_fitness, sort_population, default_problems, generate_nearest_neightbor, mutate_hard, uniform_crossover
 from draw_functions import draw_paths, draw_plot, draw_cities
-from selection_functions import random_fitness_probability, championship_selection, rank_based_selection
-from helper_functions import get_duplicated_items
+from selection_functions import tournament_selection, rank_based_selection, tournament_or_rank_based_selection
 import sys
 import numpy as np
 import pygame
@@ -156,10 +155,10 @@ while running:
         # parent1, parent2 = rank_based_selection(population, population_fitness=population_fitness)
 
          # Enhanced selection
-        if random.random() < 0.7:  
-            parent1, parent2 = championship_selection(population)
-        else:
-            parent1, parent2 = rank_based_selection(population, population_fitness)
+        parent1, parent2 = tournament_or_rank_based_selection(
+            population, population_fitness,
+            tournament_prob=0.7
+        )
 
         child1, child2 = order_crossover(parent1, parent2)
         # child1, child2 = uniform_crossover(parent1, parent2)
