@@ -70,17 +70,23 @@ def calculate_distance(point1: Tuple[float, float], point2: Tuple[float, float])
     return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
 
-def calculate_fitness(path: List[Tuple[float, float]]) -> float:
+def calculate_fitness(path: List[Tuple[float, float]], forbidden_routes=None) -> float:
     """
     Calculate the fitness of a given path based on the total Euclidean distance.
+    Optionally considers forbidden routes if provided.
 
     Parameters:
     - path (List[Tuple[float, float]]): A list of tuples representing the path,
       where each tuple contains the coordinates of a point.
+    - forbidden_routes: Optional ForbiddenRoutes object to check for route restrictions
 
     Returns:
-    float: The total Euclidean distance of the path.
+    float: The total Euclidean distance of the path (plus penalties if forbidden_routes is provided).
     """
+    if forbidden_routes is not None:
+        from restrictions.forbidden_routes import calculate_fitness_with_restrictions
+        return calculate_fitness_with_restrictions(path, forbidden_routes)
+    
     distance = 0
     n = len(path)
     for i in range(n):
