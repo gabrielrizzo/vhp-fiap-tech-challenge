@@ -28,16 +28,15 @@ As restrições implementadas nesta pasta têm como objetivo:
    - ⬜ Capacidade de atendimento por período
    - 🔄 Restrição Muito Avançada Múltiplos caixeiros (mTSP) – Várias ambulâncias dividem os atendimentos entre diferentes pacientes espalhados pela cidade. (Gerson)
    - ⬜ Balanceamento de rotas – Nenhuma ambulância deve ficar sobrecarregada com 10 atendimentos enquanto outra faz apenas 2.
-   - ⬜ Áreas exclusivas por caixeiro – Uma ambulância só pode operar na Zona Sul, enquanto outra cobre a Zona Norte.
+   - ⬜ Áreas exclusivas por caixeiro – Uma ambulância só pode operar na Zona Sul, enquanto outra cobre a Zona Norte. Exemplo: reduzir tempo de resposta criando zonas de responsabilidade.
 
- Exemplo: reduzir tempo de resposta criando zonas de responsabilidade.
 
-    ###Legenda:
-    * ⬜ Não iniciado
-    * 🔄 Em andamento
-    * ✅ Concluído
-    * ❌ Cancelado
-    * 🛑 Bloqueado
+### Legenda: 
+   * ⬜ Não iniciado
+   * 🔄 Em andamento
+   * ✅ Concluído
+   * ❌ Cancelado
+   * 🛑 Bloqueado
 
 ## Estrutura
 
