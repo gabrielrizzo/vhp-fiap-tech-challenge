@@ -2,9 +2,9 @@ import pygame
 from pygame.locals import *
 import random
 import itertools
-from genetic_algorithm import order_crossover, generate_random_population, calculate_fitness, sort_population, default_problems, generate_nearest_neightbor, mutate_hard, uniform_crossover
+from genetic_algorithm import order_crossover, generate_random_population, calculate_fitness, sort_population, generate_nearest_neightbor, mutate_hard
 from draw_functions import draw_paths, draw_plot, draw_cities
-from selection_functions import tournament_selection, rank_based_selection, tournament_or_rank_based_selection
+from selection_functions import tournament_or_rank_based_selection
 import sys
 import numpy as np
 import pygame
