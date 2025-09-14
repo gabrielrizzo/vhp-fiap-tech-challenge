@@ -1,0 +1,17 @@
+# Dependências para o Algoritmo Genético TSP
+# Projeto: Solucionador do Problema do Caixeiro Viajante usando Algoritmo Genético
+
+# Pygame - Biblioteca para desenvolvimento de jogos e visualização
+pygame>=2.5.0
+
+# NumPy - Computação numérica e arrays
+numpy>=1.24.0
+
+# Matplotlib - Plotagem e visualização de gráficos
+matplotlib>=3.7.0
+
+# Pylab - Interface para matplotlib (incluído com matplotlib)
+# pylab está incluído no matplotlib, não precisa ser instalado separadamente
+
+scipy>=1.16.2
+

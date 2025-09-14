@@ -3,7 +3,7 @@
 import random
 import math
 import copy 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from scipy.spatial import ConvexHull
 import numpy as np
 
@@ -70,17 +70,26 @@ def calculate_distance(point1: Tuple[float, float], point2: Tuple[float, float])
     return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
 
-def calculate_fitness(path: List[Tuple[float, float]]) -> float:
+def calculate_fitness(path: List[Tuple[float, float]], multiple_vehicles=None, depot=None) -> float:
     """
     Calculate the fitness of a given path based on the total Euclidean distance.
+    If multiple_vehicles is provided, calculates fitness considering multiple vehicles optimization.
 
     Parameters:
     - path (List[Tuple[float, float]]): A list of tuples representing the path,
       where each tuple contains the coordinates of a point.
+    - multiple_vehicles: Optional MultipleVehicles object for multi-vehicle optimization
+    - depot: Optional depot (depot or base hospital) coordinates for multi-vehicle optimization
 
     Returns:
-    float: The total Euclidean distance of the path.
+    float: The total Euclidean distance of the path or multi-vehicle fitness.
     """
+    # Se múltiplos veículos estão sendo usados, calcula fitness otimizado
+    if multiple_vehicles is not None and depot is not None:
+        from restrictions.multiple_vehicles.multiple_vehicles import calculate_fitness_with_multiple_vehicles
+        return calculate_fitness_with_multiple_vehicles(path, depot, multiple_vehicles)
+    
+    # Cálculo padrão de fitness (distância total)
     distance = 0
     n = len(path)
     for i in range(n):
