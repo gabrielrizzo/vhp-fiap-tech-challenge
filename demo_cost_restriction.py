@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import pygame
 from benchmark_att48 import *
+from restrictions.cost_restriction import RouteCostRestriction
 
 
 # Define constant values
@@ -40,6 +41,12 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
+# Cost
+route_costs = {
+    ((6734, 1453), (2233 , 10)): 7,
+    ((7608, 4458), (7573, 3716)): 14,
+}
+
 
 # Initialize problem
 # Using Random cities generation
@@ -62,8 +69,6 @@ scale_y = HEIGHT / max_y
 cities_locations = [(int(point[0] * scale_x + PLOT_X_OFFSET),
                      int(point[1] * scale_y)) for point in att_cities_locations]
 target_solution = [cities_locations[i-1] for i in att_48_cities_order]
-fitness_target_solution = calculate_fitness(target_solution)
-print(f"Best Solution: {fitness_target_solution}")
 print(f"Initial mutation intensity {INTIAL_MUTATION_INTENSITY} Initial mutation prob {INITIAL_MUTATION_PROBABILITY}")
 # ----- Using att48 benchmark
 
@@ -79,6 +84,15 @@ mutation_intensity = INTIAL_MUTATION_INTENSITY
 mutation_probability = INITIAL_MUTATION_PROBABILITY
 finished_exploration = False
 
+route_restriction = RouteCostRestriction(cities_locations, route_costs)
+route_restriction.config_dimensions(
+    width=1500, plot_x_offset=450, height=800, node_radius=10
+)
+
+fitness_target_solution = route_restriction.united_fitness_with_route_cost(
+    path=target_solution,
+    use_normalized=True)
+print(f"Best Solution: {fitness_target_solution}")
 
 # Create Initial Population
 # TODO:- use some heuristic like Nearest Neighbour our Convex Hull to initialize
@@ -108,13 +122,18 @@ while running:
 
     screen.fill(WHITE)
 
-    population_fitness = [calculate_fitness(
-        individual) for individual in population]
+    population_fitness = [route_restriction.united_fitness_with_route_cost(
+    path=individual,
+    use_normalized=True
+) for individual in population]
 
     population, population_fitness = sort_population(
         population,  population_fitness)
 
-    best_fitness = calculate_fitness(population[0])
+    best_fitness = route_restriction.united_fitness_with_route_cost(
+    path=population[0],
+    use_normalized=True)
+
     best_solution = population[0]
 
     if finished_exploration:
