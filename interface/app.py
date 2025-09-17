@@ -17,7 +17,8 @@ from genetic_algorithm import (
     mutate_hard,
     sort_population,
 )
-from restrictions.forbidden_routes import ForbiddenRoutes
+
+from restrictions.forbidden_routes.forbidden_routes import ForbiddenRoutes
 
 # Configuração da página
 st.set_page_config(
@@ -63,7 +64,7 @@ with st.sidebar:
         n_forbidden_routes = st.slider(
             "Número de Rotas Proibidas",
             1,
-            n_cities * (n_cities - 1) // 4,  # Máximo de 25% das rotas possíveis
+            n_cities * (n_cities - 1) // 4,  # Máximo de 25% das rotas possuivas    
             n_cities
         )
 
@@ -185,11 +186,12 @@ if 'fitness_history' not in st.session_state:
     st.session_state.generation_of_best = 0
 
 # Estado da aplicação
-if 'cities' not in st.session_state:
+if 'cities' not in st.session_state or 'current_n_cities' not in st.session_state or st.session_state.current_n_cities != n_cities:
     st.session_state.cities = [
         (np.random.randint(0, 100), np.random.randint(0, 100))
         for _ in range(n_cities)
     ]
+    st.session_state.current_n_cities = n_cities
 
 if 'forbidden_routes' not in st.session_state:
     st.session_state.forbidden_routes = ForbiddenRoutes()
