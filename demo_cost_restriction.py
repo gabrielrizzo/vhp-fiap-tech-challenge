@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 import random
 import itertools
-from genetic_algorithm import order_crossover, generate_random_population, calculate_fitness, sort_population, generate_nearest_neightbor, mutate_hard
+from genetic_algorithm import order_crossover, generate_random_population, sort_population, generate_nearest_neightbor, mutate_hard, default_problems
 from draw_functions import draw_paths, draw_plot, draw_cities
 from selection_functions import tournament_or_rank_based_selection
 import sys
@@ -18,10 +18,10 @@ WIDTH, HEIGHT = 800, 400
 NODE_RADIUS = 10
 FPS = 30
 PLOT_X_OFFSET = 450
-GENERATION_LIMIT = 10000
+GENERATION_LIMIT = 20
 
 # GA
-N_CITIES = 48
+N_CITIES = 15
 POPULATION_SIZE = 2000
 N_GENERATIONS = None
 N_EXPLORATION_GENERATION = 300
@@ -43,8 +43,8 @@ BLUE = (0, 0, 255)
 
 # Cost
 route_costs = {
-    ((6734, 1453), (2233 , 10)): 7,
-    ((7608, 4458), (7573, 3716)): 14,
+    ((512, 317), (741, 72)): 7,
+    ((605, 15), (637, 12)): 1
 }
 
 
@@ -56,19 +56,19 @@ route_costs = {
 
 # # Using Deault Problems: 10, 12 or 15
 # WIDTH, HEIGHT = 800, 400
-# cities_locations = default_problems[15]
+cities_locations = default_problems[15]
 
 
 # Using att48 benchmark
-WIDTH, HEIGHT = 1500, 800
-att_cities_locations = np.array(att_48_cities_locations)
-max_x = max(point[0] for point in att_cities_locations)
-max_y = max(point[1] for point in att_cities_locations)
-scale_x = (WIDTH - PLOT_X_OFFSET - NODE_RADIUS) / max_x
-scale_y = HEIGHT / max_y
-cities_locations = [(int(point[0] * scale_x + PLOT_X_OFFSET),
-                     int(point[1] * scale_y)) for point in att_cities_locations]
-target_solution = [cities_locations[i-1] for i in att_48_cities_order]
+# WIDTH, HEIGHT = 1500, 800
+# att_cities_locations = np.array(att_48_cities_locations)
+# max_x = max(point[0] for point in att_cities_locations)
+# max_y = max(point[1] for point in att_cities_locations)
+# scale_x = (WIDTH - PLOT_X_OFFSET - NODE_RADIUS) / max_x
+# scale_y = HEIGHT / max_y
+# cities_locations = [(int(point[0] * scale_x + PLOT_X_OFFSET),
+#                      int(point[1] * scale_y)) for point in att_cities_locations]
+# target_solution = [cities_locations[i-1] for i in att_48_cities_order]
 print(f"Initial mutation intensity {INTIAL_MUTATION_INTENSITY} Initial mutation prob {INITIAL_MUTATION_PROBABILITY}")
 # ----- Using att48 benchmark
 
@@ -84,15 +84,15 @@ mutation_intensity = INTIAL_MUTATION_INTENSITY
 mutation_probability = INITIAL_MUTATION_PROBABILITY
 finished_exploration = False
 
-route_restriction = RouteCostRestriction(cities_locations, route_costs)
+route_restriction = RouteCostRestriction(cities_locations, route_costs, gas_cost_per_km=5)
 route_restriction.config_dimensions(
     width=1500, plot_x_offset=450, height=800, node_radius=10
 )
 
-fitness_target_solution = route_restriction.united_fitness_with_route_cost(
-    path=target_solution,
-    use_normalized=True)
-print(f"Best Solution: {fitness_target_solution}")
+# fitness_target_solution = route_restriction.united_fitness(
+#     path=target_solution,
+#     use_normalized=True)
+# print(f"Best Solution: {fitness_target_solution}")
 
 # Create Initial Population
 # TODO:- use some heuristic like Nearest Neighbour our Convex Hull to initialize
@@ -122,17 +122,17 @@ while running:
 
     screen.fill(WHITE)
 
-    population_fitness = [route_restriction.united_fitness_with_route_cost(
+    population_fitness = [route_restriction.united_fitness(
     path=individual,
-    use_normalized=True
+    use_normalized=False
 ) for individual in population]
 
     population, population_fitness = sort_population(
         population,  population_fitness)
 
-    best_fitness = route_restriction.united_fitness_with_route_cost(
+    best_fitness = route_restriction.united_fitness(
     path=population[0],
-    use_normalized=True)
+    use_normalized=False)
 
     best_solution = population[0]
 
@@ -211,6 +211,7 @@ while running:
 
     if generation >= GENERATION_LIMIT:
         print('Generation limit reached. Stopping algorithm')
+        print(route_restriction.get_route_description(population[0], False))
         running = False
 
 

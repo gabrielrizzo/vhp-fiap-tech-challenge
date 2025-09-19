@@ -4,13 +4,22 @@
 from typing import List, Tuple, Dict
 from genetic_algorithm import calculate_fitness
 
+from genetic_algorithm import calculate_distance, calculate_distance_in_km
+
 class RouteCostRestriction:
     """
         Implementação de classe do custo das rotas
         cities_locations: Listagem do problema
         city_route_cost: Dicionário de custos de rotas no formato ((x,y), (x,y)): custo
     """
-    def __init__(self, cities_locations: List[Tuple[float, float]], city_route_cost: Dict):
+    def __init__(
+            self,
+            cities_locations: List[Tuple[float, float]],
+            city_route_cost: Dict,
+            gas_cost_per_km: float,
+            vehicle_quantity: int = 1,
+            pixels_to_km_factor: float = 0.01
+    ):
         self.cities_locations = cities_locations
         self.city_route_cost = city_route_cost
         self.plot_x_offset = 0
@@ -18,6 +27,9 @@ class RouteCostRestriction:
         self.height = 0
         self.node_radius = 0
         self.normalized_cities = None
+        self.gas_cost_per_km = gas_cost_per_km
+        self.vehicle_quantity = vehicle_quantity
+        self.pixels_to_km_factor = pixels_to_km_factor
 
     def config_dimensions(
         self,
@@ -48,6 +60,37 @@ class RouteCostRestriction:
         normalized_y = int(original_point[1] * scale_y)
 
         return (normalized_x, normalized_y)
+
+    def _calculate_route_gas_cost(self, route: List[Tuple[float, float]]) -> float:
+        """Calcula o custo da rota baseado no custo do combustível pela distância"""
+        if len(route) < 2:
+            return 0.0
+
+        total_distance = 0.0
+        for i in range(len(route) - 1):
+            total_distance += calculate_distance(route[i], route[i + 1])
+
+        total_distance_km = calculate_distance_in_km(total_distance, self.pixels_to_km_factor)
+
+        gas_cost_per_km = total_distance_km * self.gas_cost_per_km
+        return gas_cost_per_km * self.vehicle_quantity
+
+    def united_fitness(
+        self,
+        path: List[Tuple[float, float]],
+        use_normalized: bool = False
+    ) -> float:
+        """
+            Calcula o fitness de forma unificada com o fitness original
+            Feito para nao precisarmos mudar a função de fitness original
+        """
+        original_fitness = calculate_fitness(path)
+        fitness_with_tax, _ = self.calculate_fitness_with_route_cost(
+            path, original_fitness, use_normalized)
+        gas_cost = self._calculate_route_gas_cost(path)
+
+        return fitness_with_tax + gas_cost
+
 
     def calculate_fitness_with_route_cost(self, path: List[Tuple[float, float]], 
                                         original_fitness: float,
@@ -83,7 +126,7 @@ class RouteCostRestriction:
                 total_route_cost += self.city_route_cost[reverse_key]
             # Se não encontrar, custo é 0 (rota gratuita)
 
-        return original_fitness + total_route_cost
+        return original_fitness + total_route_cost, total_route_cost
 
     def united_fitness_with_route_cost(
         self,
@@ -166,3 +209,20 @@ class RouteCostRestriction:
             int: Número de rotas com custo
         """
         return len(self.city_route_cost)
+
+    def get_route_description(self, path, use_normalized: bool = False) -> str:
+        """
+            Gera o relatório com o custo de combustível e pedágio
+        """
+        original_fitness = calculate_fitness(path)
+        total_fitness, tax_cost = self.calculate_fitness_with_route_cost(
+            path, original_fitness, use_normalized)
+        gas_cost = self._calculate_route_gas_cost(path)
+
+        return f"""
+            O Custo final do melhor trajeto foi:
+
+            Taxa de Fitness total: {round(total_fitness, 2)}
+            Taxa de pedágio: R$ {round(tax_cost, 2)}
+            Taxa de combustível: {round(gas_cost, 2)}
+        """

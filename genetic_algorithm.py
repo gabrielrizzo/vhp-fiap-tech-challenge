@@ -72,6 +72,15 @@ def calculate_distance(point1: Tuple[float, float], point2: Tuple[float, float])
     """
     return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
+def calculate_distance_in_km(euclidian_distance: float, km_factor: float):
+    """
+        Converte a distancia euclidiana em KM. Baseado no fator utilizado
+
+        O fator é, de quantos KMs por pixel temos na coordenada utilizada para medir
+        a distância euclidiana
+    """
+    return euclidian_distance * km_factor
+
 
 def calculate_fitness(path: List[Tuple[float, float]]) -> float:
     """
