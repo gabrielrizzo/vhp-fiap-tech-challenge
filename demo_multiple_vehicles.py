@@ -6,8 +6,10 @@ from genetic_algorithm import (
     calculate_fitness,
     order_crossover,
     mutate,
+    mutate_hard,
     sort_population
 )
+from selection_functions import tournament_or_rank_based_selection
 from restrictions.multiple_vehicles.multiple_vehicles import MultipleVehicles
 
 def run_tsp_with_multiple_vehicles_demo(
@@ -38,6 +40,8 @@ def run_tsp_with_multiple_vehicles_demo(
     population = generate_random_population(patients, population_size)
 
     # Lista para armazenar os melhores valores de fitness
+    last_best_fitness = 0
+    generation_same_fitness_counter = 0
     best_fitness_values = []
     best_solutions = []
 
@@ -59,26 +63,57 @@ def run_tsp_with_multiple_vehicles_demo(
         best_fitness_values.append(best_fitness)
         best_solutions.append(best_solution)
 
+        if last_best_fitness == best_fitness:
+            generation_same_fitness_counter = generation_same_fitness_counter + 1
+        else:
+            last_best_fitness = best_fitness
+            generation_same_fitness_counter = 0
+
         print(f"Geração {generation}: Melhor fitness = {best_fitness:.2f}")
+
+        # Exploração: aumenta a probabilidade da mutação
+        # para explorar mais a busca e evitar convergência prematura
+        if generation_same_fitness_counter >= 100 and mutation_probability < 0.85:
+            mutation_probability = mutation_probability + 0.05
+            print(f"INCREASING MUTATION PROB TO {mutation_probability}")
 
         # Elitismo: mantém o melhor indivíduo
         new_population = [population[0]]
 
         # Cria nova população
-        while len(new_population) < population_size:
-            # Seleção
-            parent1, parent2 = random.choices(population[:10], k=2)
+        while len(new_population) < population_size: 
+            # Estratégia de seleção balanceada: 40% pressão de seleção + 60% diversidade
+            """
+            if random.random() < 0.4:
+                # Seleção dos melhores: escolhe pais apenas dos 10% melhores indivíduos
+                # Isso aplica pressão de seleção para manter soluções promissoras
+                elite_size = max(1, population_size // 10)  # 10% da população (mínimo 1)
+                parent1, parent2 = random.choices(population[:elite_size], k=2)
+            else:
+                # Seleção aleatória: escolhe pais de toda a população
+                # Isso mantém diversidade genética e evita convergência prematura
+                parent1, parent2 = random.choices(population, k=2)
+            """
+            # Enhanced selection
+            parent1, parent2 = tournament_or_rank_based_selection(
+                population, population_fitness,
+                tournament_prob=0.7
+            )
 
             # Crossover
             child1, child2 = order_crossover(parent1, parent2)
 
             # Mutação
             child1 = mutate(child1, mutation_probability)
+            child2 = mutate(child2, mutation_probability)
 
-            new_population.append(child1)
-
+            if(child1 not in new_population):
+                new_population.append(child1)
+            if(child2 not in new_population and len(new_population) < population_size):
+                new_population.append(child2)
+            
         population = new_population
-    
+
     # Calcula métricas finais da melhor solução
     best_multiple_vehicles = MultipleVehicles(max_vehicles, vehicle_capacity)
     best_multiple_vehicles.assign_patients_to_vehicles(best_solution, depot)
@@ -88,7 +123,8 @@ def run_tsp_with_multiple_vehicles_demo(
         'average_time': best_multiple_vehicles.get_average_time(),
         'vehicle_count': best_multiple_vehicles.get_vehicle_count(),
         'vehicle_utilization': best_multiple_vehicles.get_vehicle_utilization(),
-        'vehicle_routes': best_multiple_vehicles.vehicle_routes
+        'vehicle_routes': best_multiple_vehicles.vehicle_routes,
+        'vehicle_times': best_multiple_vehicles.vehicle_times
     }
     
     # Retorna a melhor solução encontrada
@@ -165,9 +201,9 @@ def main() -> None:
     print()
     
     # ===== CONFIGURAÇÕES DO ALGORITMO GENÉTICO =====
-    POPULATION_SIZE = 100
+    POPULATION_SIZE = 1000
     N_GENERATIONS = 1000
-    MUTATION_PROBABILITY = 0.3
+    MUTATION_PROBABILITY = 0.4
 
     # Executa o algoritmo
     best_solution, best_fitness, metrics = run_tsp_with_multiple_vehicles_demo(
@@ -194,12 +230,19 @@ def main() -> None:
         print(f"  Ambulância {vehicle_id}: {utilization:.1%} utilizada")
     print()
     
+    print("TEMPOS INDIVIDUAIS DAS AMBULÂNCIAS:")
+    for vehicle_id, time in metrics['vehicle_times'].items():
+        print(f"  Ambulância {vehicle_id}: {time:.2f} minutos")
+    print()
+    
     print("ROTAS DETALHADAS:")
     for vehicle_id, route in metrics['vehicle_routes'].items():
+        # Usa o tempo individual desta ambulância das métricas
+        individual_time = metrics['vehicle_times'][vehicle_id]
         print(f"  Ambulância {vehicle_id}:")
         print(f"    Rota: {route}")
         print(f"    Pacientes atendidos: {len(route) - 2}")  # -2 para excluir depósito inicial e final
-        print(f"    Tempo da rota: {metrics['total_time']:.2f} minutos")
+        print(f"    Tempo da rota: {individual_time:.2f} minutos")
         print()
     
     # Análise de eficiência
