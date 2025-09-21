@@ -23,9 +23,9 @@ def run_tsp_with_multiple_vehicles_demo(
     Executa o algoritmo genético do TSP com restrições de múltiplos veículos.
 
     Parâmetros:
-    - patients: Lista de coordenadas dos pacientes
-    - depot: Coordenadas do depósito hospital base
-    - max_vehicles: Número máximo de ambulâncias
+    - patients: Lista de coordenadas (x, y) dos pacientes a serem atendidos
+    - depot: Coordenadas (x, y) do depósito ou hospital base
+    - multiple_vehicles: Objeto MultipleVehicles configurado com capacidades
     - vehicle_capacity: Capacidade de cada ambulância
     - population_size: Tamanho da população
     - n_generations: Número de gerações
@@ -116,7 +116,7 @@ CONFIGURAÇÕES DISPONÍVEIS:
    - "random": Gera pacientes aleatórios
    - "att48": Usa dataset ATT48 (48 cidades)
 
-2. Para pacientes aleatórios:
+2. Para pacientes aleatórios (PATIENT_SOURCE == "random"):
    - N_PATIENTS: Número de pacientes
    - X_RANGE, Y_RANGE: Ranges de coordenadas
 
@@ -133,23 +133,20 @@ def main() -> None:
     """Exemplo de uso da restrição de múltiplos veículos."""
     
     # ===== CONFIGURAÇÕES =====
+    # Configurações do sistema de ambulâncias
+    MAX_VEHICLES = 20 # Número máximo de ambulâncias
+    VEHICLE_CAPACITY = 8  # Capacidade de cada ambulância
+
     # Escolha o tipo de geração de pacientes:
     PATIENT_SOURCE = "att48"  # Opções: "random", "att48"
     
-    # Configurações para pacientes aleatórios
-    N_PATIENTS = 20
-    X_RANGE = (0, 100)  # Range X para pacientes aleatórios
-    Y_RANGE = (0, 100)  # Range Y para pacientes aleatórios
-    
-    # Define o depósito (hospital base)
-    depot = (50, 50)  # Centro da cidade
-    
-    # Configurações do sistema de ambulâncias
-    MAX_VEHICLES = 20
-    VEHICLE_CAPACITY = 8  # Capacidade de cada ambulância
-    
     # ===== GERAÇÃO DE PACIENTES =====
     if PATIENT_SOURCE == "random":
+        # Configurações para pacientes aleatórios (PATIENT_SOURCE == "random")
+        N_PATIENTS = 20
+        X_RANGE = (0, 100)  # Range X para pacientes aleatórios
+        Y_RANGE = (0, 100)  # Range Y para pacientes aleatórios
+
         patients = generate_random_patients(N_PATIENTS, X_RANGE, Y_RANGE)
         print(f"Usando {N_PATIENTS} pacientes aleatórios")
         depot = (50, 50)  # Centro padrão
@@ -220,7 +217,7 @@ def main() -> None:
     print("\nRECOMENDAÇÕES:")
     if avg_utilization < 0.7:
         print("  - Considerar reduzir o número de ambulâncias para melhorar a utilização")
-    elif avg_utilization > 0.9:
+    elif avg_utilization > 1:
         print("  - Considerar aumentar o número de ambulâncias para reduzir o tempo de atendimento")
     else:
         print("  - Configuração atual está bem balanceada")

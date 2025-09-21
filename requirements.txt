@@ -10,8 +10,8 @@ numpy>=1.24.0
 # Matplotlib - Plotagem e visualização de gráficos
 matplotlib>=3.7.0
 
-# Pylab - Interface para matplotlib (incluído com matplotlib)
-# pylab está incluído no matplotlib, não precisa ser instalado separadamente
-
-scipy>=1.16.2
+# O SciPy é uma biblioteca para computação científica em Python. 
+# É uma extensão do NumPy que fornece uma ampla gama de algoritmos 
+# matemáticos, científicos e de engenharia de alta qualidade.
+scipy>=1.15.3
 

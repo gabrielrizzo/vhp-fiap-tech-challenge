@@ -22,11 +22,11 @@ class MultipleVehicles:
         Distribui os pacientes entre as ambulâncias de forma otimizada.
         
         Parâmetros:
-        - patients: Lista de coordenadas dos pacientes
-        - depot: Coordenadas do depósito ou hospital base
+        - patients: Lista de coordenadas (cidades) dos pacientes
+        - depot: Coordenadas (cidade) do depósito ou hospital base
         
         Retorna:
-        - Dict com as rotas de cada ambulância
+        - Dict com as rotas (cidades) de cada ambulância
         """
         # Limpa rotas anteriores
         self.vehicle_routes.clear()
@@ -75,7 +75,7 @@ class MultipleVehicles:
         if not patients:
             return [depot]
             
-        # Começa no depósito
+        # Começa no depósito ou hospital base
         route = [depot]
         remaining_patients = patients.copy()
         
@@ -88,16 +88,19 @@ class MultipleVehicles:
             route.append(nearest_patient)
             remaining_patients.remove(nearest_patient)
         
-        # Retorna ao depósito
+        # Retorna ao depósito ou hospital base
         route.append(depot)
         return route
     
     def _calculate_distance(self, point1: Tuple[float, float], point2: Tuple[float, float]) -> float:
-        """Calcula distância euclidiana entre dois pontos."""
+        """Calcula distância euclidiana entre dois pontos (cidades)."""
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
     
-    def _calculate_route_time(self, route: List[Tuple[float, float]]) -> float:
-        """Calcula o tempo total de uma rota (assumindo velocidade constante)."""
+    def _calculate_route_time(self, route: List[Tuple[float, float]], speed_kmh: float = 50.0) -> float:
+        """
+        Calcula o tempo total de uma rota 
+        Assumindo velocidade (speed_kmh) constante de 50 km/h (ajuste conforme necessário).
+        """
         if len(route) < 2:
             return 0.0
             
@@ -105,8 +108,6 @@ class MultipleVehicles:
         for i in range(len(route) - 1):
             total_distance += self._calculate_distance(route[i], route[i + 1])
             
-        # Assumindo velocidade de 50 km/h (ajuste conforme necessário)
-        speed_kmh = 50.0
         time_hours = total_distance / speed_kmh
         return time_hours * 60  # Retorna em minutos
     
@@ -146,16 +147,29 @@ def calculate_fitness_with_multiple_vehicles(
     """
     Calcula o fitness considerando múltiplos veículos.
     
+    Esta função avalia a qualidade de uma solução de roteamento considerando três
+    objetivos conflitantes: minimizar tempo total, reduzir número de veículos e
+    maximizar utilização das ambulâncias.
+    
     Parâmetros:
-    - patients: Lista de coordenadas dos pacientes
-    - depot: Coordenadas do depósito ou hospital base
-    - multiple_vehicles: Objeto MultipleVehicles
-    - time_weight: Peso para otimização do tempo
-    - vehicle_count_weight: Peso para minimizar número de veículos
-    - utilization_weight: Peso para maximizar utilização dos veículos
+    - patients: Lista de coordenadas (x, y) dos pacientes a serem atendidos
+    - depot: Coordenadas (x, y) do depósito ou hospital base
+    - multiple_vehicles: Objeto MultipleVehicles configurado com capacidades
+    - time_weight: Peso para otimização do tempo total (padrão: 1.0)
+        * Controla a importância de minimizar o tempo da ambulância mais lenta
+        * Valores maiores priorizam soluções mais rápidas
+    - vehicle_count_weight: Peso para minimizar número de veículos (padrão: 10.0)
+        * Penaliza o uso excessivo de ambulâncias para otimizar recursos
+        * Valores maiores incentivam soluções com menos veículos
+    - utilization_weight: Peso para maximizar utilização dos veículos (padrão: 5.0)
+        * Recompensa o uso eficiente da capacidade das ambulâncias
+        * Valores maiores priorizam ambulâncias com maior ocupação
+        
+    Fórmula do Fitness:
+    fitness = (time_weight × tempo_total) + (vehicle_count_weight × n_veículos) - (utilization_weight × utilização_média)
     
     Retorna:
-    - float: Fitness total (menor é melhor)
+    - float: Fitness total (menor valor = melhor solução)
     """
     # Distribui pacientes entre ambulâncias
     vehicle_routes = multiple_vehicles.assign_patients_to_vehicles(patients, depot)
@@ -171,46 +185,3 @@ def calculate_fitness_with_multiple_vehicles(
               utilization_weight * avg_utilization)
     
     return fitness
-
-def optimize_vehicle_assignment(
-    patients: List[Tuple[float, float]],
-    depot: Tuple[float, float],
-    max_vehicles: int = 5,
-    vehicle_capacity: int = 10,
-    n_iterations: int = 100
-) -> Tuple[MultipleVehicles, float]:
-    """
-    Otimiza a atribuição de pacientes a ambulâncias usando busca local.
-    
-    Parâmetros:
-    - patients: Lista de coordenadas dos pacientes
-    - depot: Coordenadas do depósito ou hospital base
-    - max_vehicles: Número máximo de ambulâncias
-    - vehicle_capacity: Capacidade de cada ambulância
-    - n_iterations: Número de iterações para otimização
-    
-    Retorna:
-    - Tuple[MultipleVehicles, fitness]: Melhor configuração encontrada
-    """
-    best_vehicles = None
-    best_fitness = float('inf')
-    
-    for _ in range(n_iterations):
-        # Cria nova configuração de veículos
-        vehicles = MultipleVehicles(max_vehicles, vehicle_capacity)
-        
-        # Embaralha pacientes para diferentes distribuições
-        shuffled_patients = patients.copy()
-        random.shuffle(shuffled_patients)
-        
-        # Calcula fitness
-        fitness = calculate_fitness_with_multiple_vehicles(
-            shuffled_patients, depot, vehicles
-        )
-        
-        # Atualiza melhor solução
-        if fitness < best_fitness:
-            best_fitness = fitness
-            best_vehicles = vehicles
-    
-    return best_vehicles, best_fitness
