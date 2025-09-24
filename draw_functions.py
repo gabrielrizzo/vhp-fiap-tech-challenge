@@ -93,3 +93,17 @@ def draw_text(screen: pygame.Surface, text: str, color: pygame.Color) -> None:
     
     screen.blit(text_surface, text_position)
 
+def draw_routes(screen: pygame.Surface, routes: List[List[Tuple[int, int]]], colors: List[Tuple[int, int, int]], width: int = 3):
+    """
+    Draw multiple routes on a Pygame screen with different colors.
+
+    Parameters:
+    - screen (pygame.Surface): The Pygame surface to draw the routes on.
+    - routes (List[List[Tuple[int, int]]]): List of routes, each route is a list of coordinates.
+    - colors (List[Tuple[int, int, int]]]): List of RGB colors for each route.
+    - width (int): Width of the route lines (default is 3).
+    """
+    for route, color in zip(routes, colors):
+        if len(route) > 1:
+            pygame.draw.lines(screen, color, False, route, width=width)  # False para não fechar o loop
+
