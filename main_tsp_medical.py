@@ -103,23 +103,37 @@ class MedicalRouteTSP:
         self.fitness_target_solution = self.ga.calculate_base_fitness(self.target_solution)
         print(f"Target Solution Fitness: {self.fitness_target_solution}")
         
+
     def setup_restrictions(self):
         # Load restriction settings from config
         fuel_config = self.config.get("restrictions.fuel", {})
         capacity_config = self.config.get("restrictions.vehicle_capacity", {})
+        hospital_config = self.config.get("restrictions.fixed_start", {})
         
-        # Create restrictions with config values
+        # Create fuel restriction with config values
         fuel_restriction = FuelRestriction(
             max_distance=fuel_config.get("max_distance", 250.0),
             fuel_cost_per_km=fuel_config.get("fuel_cost_per_km", 0.8)
         )
         fuel_restriction.set_weight(fuel_config.get("weight", 1.0))
         
+        # Create vehicle capacity restriction with config values
         capacity_restriction = VehicleCapacityRestriction(
             max_capacity=capacity_config.get("max_capacity", 10),
             delivery_weight_per_city=capacity_config.get("delivery_weight_per_city", 1.0)
         )
         capacity_restriction.set_weight(capacity_config.get("weight", 1.0))
+        
+        # Create fixed start (hospital) restriction
+        if hospital_config.get("enabled", False):
+            from restrictions.fixed_start_restriction import FixedStartRestriction
+            hospital_restriction = FixedStartRestriction()
+            
+            # Define primeira cidade como hospital
+            if hospital_config.get("hospital_is_first_city", True):
+                hospital_restriction.set_hospital_location(self.cities_locations[0])
+            
+            hospital_restriction.set_weight(hospital_config.get("weight", 5.0))
         
         # Add restrictions if enabled
         if fuel_config.get("enabled", True):
@@ -128,8 +142,12 @@ class MedicalRouteTSP:
         if capacity_config.get("enabled", True):
             self.ga.restriction_manager.add_restriction(capacity_restriction)
         
-        print("Active Restrictions:", self.ga.restriction_manager.get_active_restrictions())
+        if hospital_config.get("enabled", True):
+            self.ga.restriction_manager.add_restriction(hospital_restriction)
         
+        print("Active Restrictions:", self.ga.restriction_manager.get_active_restrictions())
+
+
     def setup_llm(self):
         llm_config = self.config.get("llm", {})
         if llm_config.get("enabled", True):

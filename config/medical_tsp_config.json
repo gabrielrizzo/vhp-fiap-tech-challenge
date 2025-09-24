@@ -7,7 +7,7 @@
         "plot_x_offset": 450
     },
     "genetic_algorithm": {
-        "population_size": 2000,
+        "population_size": 100,
         "generation_limit": 100,
         "n_cities": 48,
         "n_exploration_generation": 1000,
@@ -36,6 +36,11 @@
             "max_capacity": 10,
             "delivery_weight_per_city": 1.0,
             "weight": 1.0
+        },
+         "fixed_start": {
+            "enabled": true,
+            "weight": 5.0,
+            "hospital_is_first_city": true
         }
     },
     "llm": {
