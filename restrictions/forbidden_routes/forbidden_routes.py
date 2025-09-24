@@ -1,10 +1,17 @@
+"""
+Implementa a restrição de rotas proibidas para o problema do caixeiro viajante.
+Permite definir rotas que não podem ser utilizadas no caminho.
+"""
+
 from typing import List, Tuple, Set, Dict, Any
 import sys
 import os
 
 # Adiciona o diretório raiz ao path para importar os módulos
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_dir)
 
+# Importa os módulos necessários
 from genetic_algorithm import calculate_distance, calculate_fitness
 from restrictions.restriction_interface import RestrictionInterface
 
@@ -25,7 +32,8 @@ class ForbiddenRoutes(RestrictionInterface):
         Adiciona uma rota proibida entre duas cidades.
         A ordem das cidades não importa, a rota é considerada bidirecional.
         """
-        # Ordena as cidades para garantir consistência independente da ordem de entrada
+        # Ordena as cidades para garantir consistência independente 
+        # da ordem de entrada
         sorted_cities = sorted([city1, city2])
         route: Tuple[Tuple[float, float], Tuple[float, float]] = (sorted_cities[0], sorted_cities[1])
         self._forbidden_routes.add(route)
@@ -70,7 +78,8 @@ class ForbiddenRoutes(RestrictionInterface):
             city2 = path[(i + 1) % n]  # Conecta de volta à primeira cidade
 
             if self.is_route_forbidden(city1, city2):
-                # Aplica uma penalidade proporcional à distância da rota proibida
+                # Aplica uma penalidade proporcional à 
+                # distância da rota proibida
                 route_distance = calculate_distance(city1, city2)
                 penalty += self._base_distance_penalty * route_distance
 
@@ -84,7 +93,8 @@ class ForbiddenRoutes(RestrictionInterface):
             path: Lista de coordenadas das cidades no caminho
             
         Returns:
-            bool: True se o caminho não contém rotas proibidas, False caso contrário
+            bool: True se o caminho não contém rotas proibidas, \
+                False caso contrário
         """
         n = len(path)
         for i in range(n):
@@ -110,7 +120,8 @@ class ForbiddenRoutes(RestrictionInterface):
         Returns:
             str: Descrição detalhada da restrição
         """
-        return "Restrição que impede o uso de certas rotas entre cidades, simulando ruas interditadas, alagamentos, obras, etc."
+        return "Restrição que impede o uso de certas rotas entre cidades, \
+        simulando ruas interditadas, alagamentos, obras, etc."
     
     def get_parameters(self) -> Dict[str, Any]:
         """

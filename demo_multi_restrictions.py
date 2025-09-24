@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict
 from genetic_algorithm import (
     generate_random_population,
     calculate_fitness,
@@ -9,13 +9,14 @@ from genetic_algorithm import (
 )
 from restrictions.forbidden_routes import ForbiddenRoutes
 from restrictions.one_way_routes import OneWayRoutes
+from restrictions.fixed_start_city import FixedStartCity
 from restrictions.restriction_interface import RestrictionInterface
 
 
 class MultiRestrictionTSP:
     """Classe para gerenciar múltiplas restrições no TSP."""
-    
     def __init__(self):
+        """Inicializa o gerenciador de restrições."""
         self.restrictions: Dict[str, RestrictionInterface] = {}
         self.active_restrictions: Dict[str, bool] = {}
     
@@ -52,7 +53,6 @@ class MultiRestrictionTSP:
             if self.active_restrictions[name]:
                 penalty = restriction.fitness_restriction(path)
                 total_fitness += penalty
-        
         return total_fitness
     
     def is_valid(self, path: List[Tuple[float, float]]) -> bool:
@@ -70,19 +70,7 @@ def run_tsp_with_multiple_restrictions(
     n_generations: int = 100,
     mutation_probability: float = 0.3,
 ) -> Tuple[List[Tuple[float, float]], float]:
-    """
-    Executa o algoritmo genético do TSP com múltiplas restrições.
-    
-    Parâmetros:
-    - cities_locations: Lista de coordenadas das cidades
-    - multi_restriction: Gerenciador de múltiplas restrições
-    - population_size: Tamanho da população
-    - n_generations: Número de gerações
-    - mutation_probability: Probabilidade de mutação
-    
-    Retorna:
-    - Tuple[melhor_solução, melhor_fitness]
-    """
+    """Executa o algoritmo genético do TSP com múltiplas restrições."""
     # Cria população inicial
     population = generate_random_population(cities_locations, population_size)
     
@@ -118,13 +106,11 @@ def run_tsp_with_multiple_restrictions(
             parent1 = population[indices[0]]
             parent2 = population[indices[1]]
             
-            # Crossover
-            child1, child2 = order_crossover(parent1, parent2)
-            
-            # Mutação
-            child1 = mutate(child1, mutation_probability)
-            
-            new_population.append(child1)
+            # Crossover e mutação
+            child = order_crossover(parent1, parent2)[0]
+            if random.random() < mutation_probability:
+                child = mutate(child, mutation_probability)
+            new_population.append(child)
         
         population = new_population
     
@@ -162,9 +148,15 @@ def main():
         city2 = cities_locations[indices[1]]
         one_way_routes.add_one_way_route(city1, city2)
     
+    # Criar e configurar restrição de cidade inicial fixa
+    fixed_start = FixedStartCity()
+    # Define a primeira cidade como ponto inicial obrigatório
+    fixed_start.set_start_city(cities_locations[0])
+    
     # Adicionar restrições ao gerenciador
     multi_restriction.add_restriction("forbidden_routes", forbidden_routes)
     multi_restriction.add_restriction("one_way_routes", one_way_routes)
+    multi_restriction.add_restriction("fixed_start", fixed_start)
     
     # Menu para ativar/desativar restrições
     print("\nRestrições disponíveis:")
@@ -172,7 +164,7 @@ def main():
         print(f"- {name}: {restriction.get_description()}")
     
     print("\nSelecione as restrições que deseja ativar (separadas por vírgula):")
-    print("Exemplo: forbidden_routes,one_way_routes")
+    print("Exemplo: forbidden_routes,one_way_routes,fixed_start")
     selected = input().strip().split(",")
     
     # Ativar restrições selecionadas

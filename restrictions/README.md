@@ -14,7 +14,7 @@ As restrições implementadas nesta pasta têm como objetivo:
    - ✅ Rotas unidirecionais – Algumas vias são de mão única. Exemplo: a Rua da Saúde só pode ser usada no sentido bairro → centro, forçando a ambulância a dar uma volta maior. (Vinicius)
    - ⬜ Orçamento máximo – Há um limite de combustível e insumos para cada ambulância em uma operação de emergência. Exemplo: a rota não pode gastar mais que R$ 500 em combustível em um turno.
    - 🔄 Custos diferenciados por rota – Algumas estradas têm pedágio urbano ou grande congestionamento.  Exemplo: o sistema calcula que passar pelo túnel custará mais (tempo + pedágio), podendo evitar essa opção. (Gabriel)
-   - ⬜ Cidade inicial fixa – A ambulância sempre deve sair da base hospitalar.  Exemplo: toda rota começa obrigatoriamente no Hospital Municipal.
+   - ✅ Cidade inicial fixa – A ambulância sempre deve sair da base hospitalar.  Exemplo: toda rota começa obrigatoriamente no Hospital Municipal.
    - ⬜ Cidades prioritárias – Pacientes em estado crítico precisam ser atendidos antes dos demais.  Exemplo: parada cardíaca antes de transporte de paciente para exame.
    - ⬜ Checkpoints obrigatórios – A ambulância deve obrigatoriamente passar por uma farmácia hospitalar para coletar medicamentos antes de seguir para outro paciente.
    - ⬜ Distância máxima entre paradas – A cada 50 km a ambulância precisa parar em algum ponto para checagem rápida (água, reabastecimento parcial, troca de oxigênio).
@@ -52,6 +52,7 @@ Aqui está a lista de restrições já implementadas com links para suas documen
 
 1. [Rotas Proibidas](./forbidden_routes/README.md) - Implementa restrições para rotas interditadas por enchentes, obras, etc.
 2. [Rotas Unidirecionais](./one_way_routes/README.md) - Implementa restrições para vias de mão única, onde só é possível trafegar em uma direção específica
+3. [Cidade Inicial Fixa](./fixed_start_city/README.md) - Implementa restrição para que todas as rotas comecem em uma cidade específica (ex: base hospitalar)
 
 ## Integração
 

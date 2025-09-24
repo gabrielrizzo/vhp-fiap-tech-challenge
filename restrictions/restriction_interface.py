@@ -4,10 +4,11 @@ from typing import List, Tuple, Dict, Any
 
 class RestrictionInterface(ABC):
     """
-    Interface base para todas as restrições aplicadas ao problema do caixeiro viajante.
+    Interface base para todas as restrições aplicadas ao problema do
+    caixeiro viajante.
     
-    Todas as restrições devem implementar esta interface para garantir compatibilidade
-    com o algoritmo genético principal.
+    Todas as restrições devem implementar esta interface para garantir
+    compatibilidade com o algoritmo genético principal.
     """
     
     @abstractmethod
@@ -75,4 +76,7 @@ class RestrictionInterface(ABC):
             parameters: Dicionário com os parâmetros a serem configurados
         """
         pass
+
+
+
 
