@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 27 13:33:42 2023
-
-@author: SérgioPolimante
-"""
-
-## problem source: https://people.sc.fsu.edu/~jburkardt/datasets/tsp/tsp.html
-
 att_48_cities_locations = [(6734, 1453),
 (2233 , 10),
 (5530, 1424),
