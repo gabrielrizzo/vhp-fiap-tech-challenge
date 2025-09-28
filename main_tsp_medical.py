@@ -428,6 +428,7 @@ class MedicalRouteTSP:
                 fuel_restriction = restriction
                 fuel_info = fuel_restriction.get_fuel_consumption([(0,0), (100,0)])
                 print(f"Fuel restriction: max {fuel_restriction.max_distance}km, cost {fuel_restriction.fuel_cost_per_km}/km")
+                print(f"Fuel Cost Limit: R$ {fuel_restriction.fuel_cost_limit}")
             elif restriction.name == "vehicle_capacity_restriction":
                 capacity_restriction = restriction
                 print(f"Vehicle capacity: max {capacity_restriction.max_capacity} deliveries")
