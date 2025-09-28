@@ -9,7 +9,7 @@ from core.enhanced_genetic_algorithm import EnhancedGeneticAlgorithm
 from core.restriction_manager import RestrictionManager
 from core.config_manager import ConfigManager
 from restrictions.fuel_restriction import FuelRestriction
-from restrictions.route_cost import RouteCost
+from restrictions.route_cost_restriction import RouteCostRestriction
 from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
 from llm.llm_integration import LLMIntegration
 from utils.draw_functions import draw_paths, draw_plot, draw_cities
@@ -113,7 +113,7 @@ class MedicalRouteTSP:
         fuel_config = self.config.get("restrictions.fuel", {})
         capacity_config = self.config.get("restrictions.vehicle_capacity", {})
         hospital_config = self.config.get("restrictions.fixed_start", {})
-        route_cost_config = self.config.get("route_cost", {})
+        route_cost_config = self.config.get("restrictions.route_cost", {})
         
         # Create fuel restriction with config values
         fuel_restriction = FuelRestriction(
@@ -130,7 +130,7 @@ class MedicalRouteTSP:
         capacity_restriction.set_weight(capacity_config.get("weight", 1.0))
 
         #Custo da rota
-        route_cost_restriction = RouteCost(
+        route_cost_restriction = RouteCostRestriction(
             cities_locations=att_48_cities_locations,
             route_cost_dict=route_costs_att_48,
         )

@@ -4,7 +4,7 @@
 
 from typing import List, Tuple, Dict, Any
 from core.base_restriction import BaseRestriction
-class RouteCost(BaseRestriction):
+class RouteCostRestriction(BaseRestriction):
     """
         Implementação do custo para rota das cidades. Deixamos em aberto para poder
         ser a somatória de pedágio ou qualquer outro custo que seja necessário.
@@ -13,7 +13,7 @@ class RouteCost(BaseRestriction):
     def __init__(self, cities_locations: List[Tuple[float, float]],
             route_cost_dict: Dict,
             weight: float = 1):
-        super().__init__("route_cost", weight)
+        super().__init__("route_cost_restriction", weight)
         self.cities_locations = cities_locations
         self.route_cost_dict = route_cost_dict
 
