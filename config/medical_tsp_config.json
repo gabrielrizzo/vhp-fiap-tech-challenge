@@ -44,7 +44,7 @@
         },
         "route_cost":{
             "enabled": true,
-                        "weight": 1
+            "weight": 1
         },
         "multiple_vehicles": {
             "enabled": true,
