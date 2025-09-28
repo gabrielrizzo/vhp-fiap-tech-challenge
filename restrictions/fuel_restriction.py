@@ -56,7 +56,6 @@ class FuelRestriction(BaseRestriction):
 
         # Adiciona uma penalidade caso o custo seja maior que o limite
         if self.fuel_cost_limit and fuel_cost > self.fuel_cost_limit:
-            print("Excedeu o limite", fuel_cost)
             penalty = penalty + (fuel_cost * 3)
 
         # Caso não tenha passado a cota de combustível e nem a de distância, retorna penalidade 0
