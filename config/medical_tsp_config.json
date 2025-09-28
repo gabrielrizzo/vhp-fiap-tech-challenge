@@ -45,6 +45,12 @@
         "route_cost":{
             "enabled": true,
             "weight": 1
+        },
+        "multiple_vehicles": {
+            "enabled": true,
+            "max_vehicles": 20,
+            "vehicle_capacity": 1,
+            "weight": 2.0
         }
     },
     "llm": {
