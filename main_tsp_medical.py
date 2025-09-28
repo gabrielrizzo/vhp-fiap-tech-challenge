@@ -9,6 +9,7 @@ from core.enhanced_genetic_algorithm import EnhancedGeneticAlgorithm
 from core.restriction_manager import RestrictionManager
 from core.config_manager import ConfigManager
 from restrictions.fuel_restriction import FuelRestriction
+from restrictions.route_cost import RouteCost
 from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
 from llm.llm_integration import LLMIntegration
 from utils.draw_functions import draw_paths, draw_plot, draw_cities
@@ -21,6 +22,7 @@ from utils.helper_functions import (
     simple_diversity_aware_mutation
 )
 from data.benchmark_att48 import att_48_cities_locations, att_48_cities_order
+from config.route_cost import route_costs_att_48
 
 class MedicalRouteTSP:
     def __init__(self):
@@ -97,6 +99,8 @@ class MedicalRouteTSP:
         ]
         
         self.target_solution = [self.cities_locations[i-1] for i in att_48_cities_order]
+
+        print("CITIES LIST FROM PROBLEM", self.cities_locations)
         
     def setup_genetic_algorithm(self):
         self.ga = EnhancedGeneticAlgorithm(self.cities_locations)
@@ -109,6 +113,7 @@ class MedicalRouteTSP:
         fuel_config = self.config.get("restrictions.fuel", {})
         capacity_config = self.config.get("restrictions.vehicle_capacity", {})
         hospital_config = self.config.get("restrictions.fixed_start", {})
+        route_cost_config = self.config.get("route_cost", {})
         
         # Create fuel restriction with config values
         fuel_restriction = FuelRestriction(
@@ -123,7 +128,15 @@ class MedicalRouteTSP:
             delivery_weight_per_city=capacity_config.get("delivery_weight_per_city", 1.0)
         )
         capacity_restriction.set_weight(capacity_config.get("weight", 1.0))
-        
+
+        #Custo da rota
+        route_cost_restriction = RouteCost(
+            cities_locations=att_48_cities_locations,
+            route_cost_dict=route_costs_att_48,
+        )
+
+        route_cost_restriction.set_weight(route_cost_config.get("weight", 1.0))
+
         # Create fixed start (hospital) restriction
         if hospital_config.get("enabled", False):
             from restrictions.fixed_start_restriction import FixedStartRestriction
@@ -145,6 +158,9 @@ class MedicalRouteTSP:
         if hospital_config.get("enabled", True):
             self.ga.restriction_manager.add_restriction(hospital_restriction)
         
+        if route_cost_config.get("enabled", True):
+            self.ga.restriction_manager.add_restriction(route_cost_restriction)
+
         print("Active Restrictions:", self.ga.restriction_manager.get_active_restrictions())
 
 

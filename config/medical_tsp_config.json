@@ -7,8 +7,8 @@
         "plot_x_offset": 450
     },
     "genetic_algorithm": {
-        "population_size": 100,
-        "generation_limit": 100,
+        "population_size": 200,
+        "generation_limit": 2000,
         "n_cities": 48,
         "n_exploration_generation": 1000,
         "n_neighbors": 500
@@ -41,6 +41,11 @@
             "enabled": true,
             "weight": 5.0,
             "hospital_is_first_city": true
+        },
+        "route_cost":{
+            "enabled": true,
+            "convert_scale": true,
+            "weight": 1
         }
     },
     "llm": {
