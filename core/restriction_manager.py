@@ -67,7 +67,7 @@ class RestrictionManager:
                 is_valid = restriction.validate_route(route, vehicle_data)
                 penalty = restriction.calculate_penalty(route, vehicle_data)
                 
-                if not is_valid or penalty > 0:
+                if not is_valid:
                     summary['violations'].append({
                         'restriction': restriction.name,
                         'valid': is_valid,

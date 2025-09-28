@@ -41,6 +41,10 @@
             "enabled": true,
             "weight": 5.0,
             "hospital_is_first_city": true
+        },
+        "route_cost":{
+            "enabled": true,
+            "weight": 1
         }
     },
     "llm": {
