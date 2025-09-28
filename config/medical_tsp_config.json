@@ -44,7 +44,6 @@
         },
         "route_cost":{
             "enabled": true,
-            "convert_scale": true,
             "weight": 1
         }
     },
