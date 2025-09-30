@@ -29,6 +29,8 @@
             "enabled": true,
             "max_distance": 250.0,
             "fuel_cost_per_km": 0.8,
+            "fuel_cost_limit": 300,
+            "pixel_to_km_factor": 0.02,
             "weight": 1.0
         },
         "vehicle_capacity": {

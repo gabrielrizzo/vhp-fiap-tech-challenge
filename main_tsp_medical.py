@@ -120,8 +120,11 @@ class MedicalRouteTSP:
         # Create fuel restriction with config values
         fuel_restriction = FuelRestriction(
             max_distance=fuel_config.get("max_distance", 250.0),
-            fuel_cost_per_km=fuel_config.get("fuel_cost_per_km", 0.8)
+            fuel_cost_per_km=fuel_config.get("fuel_cost_per_km", 0.8),
+            fuel_cost_limit=fuel_config.get("fuel_cost_limit", None),
+            pixel_to_km_factor=fuel_config.get("pixel_to_km_factor", 0.02)
         )
+
         fuel_restriction.set_weight(fuel_config.get("weight", 1.0))
         
         # Create vehicle capacity restriction with config values
@@ -442,6 +445,7 @@ class MedicalRouteTSP:
                 fuel_restriction = restriction
                 fuel_info = fuel_restriction.get_fuel_consumption([(0,0), (100,0)])
                 print(f"Fuel restriction: max {fuel_restriction.max_distance}km, cost {fuel_restriction.fuel_cost_per_km}/km")
+                print(f"Fuel Cost Limit: R$ {fuel_restriction.fuel_cost_limit}")
             elif restriction.name == "vehicle_capacity_restriction":
                 capacity_restriction = restriction
                 print(f"Vehicle capacity: max {capacity_restriction.max_capacity} deliveries")
