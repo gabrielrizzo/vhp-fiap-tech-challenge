@@ -1,0 +1,54 @@
+{
+    "display": {
+        "width": 1500,
+        "height": 800,
+        "fps": 30,
+        "node_radius": 10,
+        "plot_x_offset": 450
+    },
+    "genetic_algorithm": {
+        "population_size": 2000,
+        "generation_limit": 10000,
+        "n_cities": 48,
+        "n_exploration_generation": 1000,
+        "n_neighbors": 500
+    },
+    "mutation": {
+        "initial_probability": 0.85,
+        "initial_intensity": 25,
+        "after_exploration_intensity": 5,
+        "after_exploration_probability": 0.5
+    },
+    "diversity": {
+        "threshold": 0.3,
+        "injection_rate": 0.1,
+        "monitor_frequency": 50
+    },
+    "restrictions": {
+        "fuel": {
+            "enabled": true,
+            "max_distance": 250.0,
+            "fuel_cost_per_km": 0.8,
+            "weight": 1.0
+        },
+        "vehicle_capacity": {
+            "enabled": true,
+            "max_capacity": 10,
+            "delivery_weight_per_city": 1.0,
+            "weight": 1.0
+        }
+    },
+    "llm": {
+        "enabled": true,
+        "model": "gpt-3.5-turbo",
+        "max_tokens": 1500,
+        "temperature": 0.7,
+        "fallback_mode": true
+    },
+    "logging": {
+        "level": "INFO",
+        "log_file": "medical_tsp.log",
+        "log_generations": true,
+        "log_frequency": 100
+    }
+}

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Testes para o sistema de roteamento médico TSP."""
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,10 +13,12 @@ def test_imports():
         from restrictions.route_cost_restriction import RouteCostRestriction
         from restrictions.multiple_vehicles import MultipleVehiclesRestriction
         from restrictions.fixed_start_restriction import FixedStartRestriction
-        print("✓ All imports successful")
+        from restrictions.one_way_routes import OneWayRoutes
+        from restrictions.forbidden_routes import ForbiddenRoutes
+        print("✓ - All imports successful")
         return True
     except ImportError as e:
-        print(f"✗ Import error: {e}")
+        print(f"✗ - Import error: {e}")
         return False
 
 def test_basic_functionality():
@@ -25,31 +28,43 @@ def test_basic_functionality():
     fuel_restriction = FuelRestriction(max_distance=100.0)
     is_valid = fuel_restriction.validate_route(test_route)
     penalty = fuel_restriction.calculate_penalty(test_route)
-    print(f"✓ Basic test - Fuel Restriction - Valid: {is_valid}, Penalty: {penalty}")
+    print(f"✓ - Basic test - Fuel Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
     from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
     vehicle_capacity_restriction = VehicleCapacityRestriction(max_capacity=10)
     is_valid = vehicle_capacity_restriction.validate_route(test_route)
     penalty = vehicle_capacity_restriction.calculate_penalty(test_route)
-    print(f"✓ Basic test - Vehicle Capacity Restriction - Valid: {is_valid}, Penalty: {penalty}")
+    print(f"✓ - Basic test - Vehicle Capacity Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
     from restrictions.fixed_start_restriction import FixedStartRestriction
     fixed_start_restriction = FixedStartRestriction(hospital_location=(0, 0))
     is_valid = fixed_start_restriction.validate_route(test_route)
     penalty = fixed_start_restriction.calculate_penalty(test_route)
-    print(f"✓ Basic test - Fixed Start Restriction - Valid: {is_valid}, Penalty: {penalty}")
+    print(f"✓ - Basic test - Fixed Start Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
     from restrictions.route_cost_restriction import RouteCostRestriction
     route_cost_restriction = RouteCostRestriction(cities_locations=test_route, route_cost_dict={})
     is_valid = route_cost_restriction.validate_route(test_route)
     penalty = route_cost_restriction.calculate_penalty(test_route)
-    print(f"✓ Basic test - Route Cost Restriction - Valid: {is_valid}, Penalty: {penalty}")
+    print(f"✓ - Basic test - Route Cost Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
     from restrictions.multiple_vehicles import MultipleVehiclesRestriction
     multiple_vehicles_restriction = MultipleVehiclesRestriction(max_vehicles=10, vehicle_capacity=10)
     is_valid = multiple_vehicles_restriction.validate_route(test_route)
     penalty = multiple_vehicles_restriction.calculate_penalty(test_route)
-    print(f"✓ Basic test - Multiple Vehicles Restriction - Valid: {is_valid}, Penalty: {penalty}")
+    print(f"✓ - Basic test - Multiple Vehicles Restriction - Valid: {is_valid}, Penalty: {penalty}")
+    
+    from restrictions.one_way_routes import OneWayRoutes
+    one_way_restriction = OneWayRoutes(base_distance_penalty=1000.0)
+    is_valid = one_way_restriction.validate_route(test_route)
+    penalty = one_way_restriction.calculate_penalty(test_route)
+    print(f"✓ - Basic test - One Way Routes Restriction - Valid: {is_valid}, Penalty: {penalty}")
+    
+    from restrictions.forbidden_routes import ForbiddenRoutes
+    forbidden_restriction = ForbiddenRoutes(base_distance_penalty=1000.0)
+    is_valid = forbidden_restriction.validate_route(test_route)
+    penalty = forbidden_restriction.calculate_penalty(test_route)
+    print(f"✓ - Basic test - Forbidden Routes Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
     return True
 
@@ -70,16 +85,16 @@ if __name__ == "__main__":
         try:
             if test_func():
                 passed += 1
-                print(f"✓ {test_name} PASSED")
+                print(f"✓ - {test_name} PASSED")
             else:
-                print(f"✗ {test_name} FAILED")
+                print(f"✗ - {test_name} FAILED")
         except Exception as e:
-            print(f"✗ {test_name} ERROR: {e}")
+            print(f"✗ - {test_name} ERROR: {e}")
     
     print("\n" + "=" * 50)
     print(f"Test Results: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 All tests passed!")
+        print("🎉 - All tests passed!")
     else:
-        print("❌ Some tests failed!")
+        print("❌ - Some tests failed!")

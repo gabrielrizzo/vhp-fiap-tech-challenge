@@ -4,7 +4,7 @@ from pathlib import Path
 
 class ConfigManager:
     def __init__(self, config_file: str = "config/medical_tsp_config.json"):
-        self.config_file = Path(config_file)
+        self.config_file = Path(config_file).resolve()
         self.default_config = {
             "display": {
                 "width": 1500,
@@ -15,7 +15,7 @@ class ConfigManager:
             },
             "genetic_algorithm": {
                 "population_size": 2000,
-                "generation_limit": 10000,
+                "generation_limit": 1000,
                 "n_cities": 48,
                 "n_exploration_generation": 1000,
                 "n_neighbors": 500
@@ -42,6 +42,16 @@ class ConfigManager:
                     "enabled": True,
                     "max_capacity": 10,
                     "delivery_weight_per_city": 1.0,
+                    "weight": 1.0
+                },
+                "forbidden_routes": {
+                    "enabled": True,
+                    "base_distance_penalty": 1000.0,
+                    "weight": 1.0
+                },
+                "one_way_routes": {
+                    "enabled": True,
+                    "base_distance_penalty": 1000.0,
                     "weight": 1.0
                 }
             },
@@ -76,6 +86,8 @@ class ConfigManager:
     
     def save_config(self, config: Dict[str, Any] = None):
         config_to_save = config if config is not None else self.config
+        # Garantir que o diretório existe
+        self.config_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.config_file, 'w') as f:
             json.dump(config_to_save, f, indent=4)
     

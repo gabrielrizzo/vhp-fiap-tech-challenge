@@ -12,6 +12,8 @@ from restrictions.fuel_restriction import FuelRestriction
 from restrictions.route_cost_restriction import RouteCostRestriction
 from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
 from restrictions.multiple_vehicles import MultipleVehiclesRestriction
+from restrictions.forbidden_routes import ForbiddenRoutes
+from restrictions.one_way_routes import OneWayRoutes
 from llm.llm_integration import LLMIntegration
 from utils.draw_functions import draw_paths, draw_plot, draw_cities
 from utils.selection_functions import tournament_or_rank_based_selection
@@ -116,6 +118,8 @@ class MedicalRouteTSP:
         hospital_config = self.config.get("restrictions.fixed_start", {})
         route_cost_config = self.config.get("restrictions.route_cost", {})
         multiple_vehicles_config = self.config.get("restrictions.multiple_vehicles", {})
+        forbidden_routes_config = self.config.get("restrictions.forbidden_routes", {})
+        one_way_routes_config = self.config.get("restrictions.one_way_routes", {})
         
         # Create fuel restriction with config values
         fuel_restriction = FuelRestriction(
@@ -145,12 +149,11 @@ class MedicalRouteTSP:
         # Create fixed start (hospital) restriction
         if hospital_config.get("enabled", False):
             from restrictions.fixed_start_restriction import FixedStartRestriction
-            hospital_restriction = FixedStartRestriction()
             
-            # Define primeira cidade como hospital
-            if hospital_config.get("hospital_is_first_city", True):
-                hospital_restriction.set_hospital_location(self.cities_locations[0])
+            # Define primeira cidade como hospital por padrão
+            hospital_location = self.cities_locations[0] if hospital_config.get("hospital_is_first_city", True) else None
             
+            hospital_restriction = FixedStartRestriction(hospital_location=hospital_location)
             hospital_restriction.set_weight(hospital_config.get("weight", 5.0))
         
         # Create multiple vehicles restriction
@@ -164,6 +167,18 @@ class MedicalRouteTSP:
                 vehicle_capacity=vehicle_capacity
             )
             multiple_vehicles_restriction.set_weight(multiple_vehicles_config.get("weight", 2.0))
+            
+        # Create forbidden routes restriction
+        forbidden_routes_restriction = ForbiddenRoutes(
+            base_distance_penalty=forbidden_routes_config.get("base_distance_penalty", 1000.0)
+        )
+        forbidden_routes_restriction.set_weight(forbidden_routes_config.get("weight", 1.0))
+        
+        # Create one way routes restriction
+        one_way_routes_restriction = OneWayRoutes(
+            base_distance_penalty=one_way_routes_config.get("base_distance_penalty", 1000.0)
+        )
+        one_way_routes_restriction.set_weight(one_way_routes_config.get("weight", 1.0))
         
         # Add restrictions if enabled
         if fuel_config.get("enabled", True):
@@ -172,14 +187,20 @@ class MedicalRouteTSP:
         if capacity_config.get("enabled", True):
             self.ga.restriction_manager.add_restriction(capacity_restriction)
         
-        if hospital_config.get("enabled", True):
+        if hospital_config.get("enabled", False):
             self.ga.restriction_manager.add_restriction(hospital_restriction)
         
         if route_cost_config.get("enabled", True):
             self.ga.restriction_manager.add_restriction(route_cost_restriction)
 
-        if multiple_vehicles_config.get("enabled", True):
+        if multiple_vehicles_config.get("enabled", False):
             self.ga.restriction_manager.add_restriction(multiple_vehicles_restriction)
+            
+        if forbidden_routes_config.get("enabled", False):
+            self.ga.restriction_manager.add_restriction(forbidden_routes_restriction)
+            
+        if one_way_routes_config.get("enabled", False):
+            self.ga.restriction_manager.add_restriction(one_way_routes_restriction)
         
         print("Active Restrictions:", self.ga.restriction_manager.get_active_restrictions())
 
@@ -455,6 +476,12 @@ class MedicalRouteTSP:
             elif restriction.name == "multiple_vehicles_restriction":
                 multiple_vehicles_restriction = restriction
                 print(f"Multiple vehicles: max {multiple_vehicles_restriction.max_vehicles} vehicles, capacity {multiple_vehicles_restriction.vehicle_capacity} patients/vehicle, depot at {multiple_vehicles_restriction.depot}")
+            elif restriction.name == "forbidden_routes":
+                forbidden_routes_restriction = restriction
+                print(f"Forbidden routes: {len(forbidden_routes_restriction.get_all_forbidden_routes())} routes, penalty {forbidden_routes_restriction._base_distance_penalty}")
+            elif restriction.name == "one_way_routes":
+                one_way_routes_restriction = restriction
+                print(f"One-way routes: {len(one_way_routes_restriction.get_all_one_way_routes())} routes, penalty {one_way_routes_restriction._base_distance_penalty}")
         
         print("=" * 50)
         
