@@ -10,7 +10,7 @@ from core.restriction_manager import RestrictionManager
 from core.config_manager import ConfigManager
 from restrictions.fuel_restriction import FuelRestriction
 from restrictions.route_cost_restriction import RouteCostRestriction
-from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
+from restrictions.ambulance_patient_restriction import AmbulancePatientRestriction
 from restrictions.multiple_vehicles import MultipleVehiclesRestriction
 from llm.llm_integration import LLMIntegration
 from utils.draw_functions import draw_paths, draw_plot, draw_cities
@@ -128,9 +128,9 @@ class MedicalRouteTSP:
         fuel_restriction.set_weight(fuel_config.get("weight", 1.0))
         
         # Create vehicle capacity restriction with config values
-        capacity_restriction = VehicleCapacityRestriction(
-            max_capacity=capacity_config.get("max_capacity", 10),
-            delivery_weight_per_city=capacity_config.get("delivery_weight_per_city", 1.0)
+        capacity_restriction = AmbulancePatientRestriction(
+            max_patients=capacity_config.get("max_patients", 10),
+            vehicle_data={'city_patients': {'1352_224': 1, '1423_195': 1}}
         )
         capacity_restriction.set_weight(capacity_config.get("weight", 1.0))
 
@@ -156,7 +156,7 @@ class MedicalRouteTSP:
         # Create multiple vehicles restriction
         if multiple_vehicles_config.get("enabled", False):
             # Usa a capacidade da restrição de capacidade se disponível, senão usa 1
-            vehicle_capacity = capacity_config.get("max_capacity", 1) if capacity_config.get("enabled", False) else 1
+            vehicle_capacity = capacity_config.get("max_patients", 1) if capacity_config.get("enabled", False) else 1
             
             multiple_vehicles_restriction = MultipleVehiclesRestriction(
                 max_vehicles=multiple_vehicles_config.get("max_vehicles", 5),
@@ -446,9 +446,9 @@ class MedicalRouteTSP:
                 fuel_info = fuel_restriction.get_fuel_consumption([(0,0), (100,0)])
                 print(f"Fuel restriction: max {fuel_restriction.max_distance}km, cost {fuel_restriction.fuel_cost_per_km}/km")
                 print(f"Fuel Cost Limit: R$ {fuel_restriction.fuel_cost_limit}")
-            elif restriction.name == "vehicle_capacity_restriction":
+            elif restriction.name == "ambulance_patient_restriction":
                 capacity_restriction = restriction
-                print(f"Vehicle capacity: max {capacity_restriction.max_capacity} deliveries")
+                print(f"Vehicle capacity: max {capacity_restriction.max_patients} deliveries")
             elif restriction.name == "route_cost_restriction":
                 route_cost_restriction = restriction
                 print(f"Route cost: {route_cost_restriction.route_cost_dict}")

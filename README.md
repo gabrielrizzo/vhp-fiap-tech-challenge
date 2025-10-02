@@ -33,7 +33,7 @@ python main_tsp_medical.py
 ## 🤝 Integração da Equipe
 
 - **Bruno (Combustível)**: Expandir `restrictions/fuel_restriction.py`
-- **Gerson (Múltiplos Veículos)**: Expandir `restrictions/vehicle_capacity_restriction.py`
+- **Gerson (Múltiplos Veículos)**: Expandir `restrictions/ambulance_patient_restriction.py`
 - **Gabriel (LLM)**: Configurar API em `llm/llm_integration.py`
 - **Amorin**: Configurar API em `llm/llm_integration.py`
 - **Mauricio**: Configurar API em `llm/llm_integration.py`
