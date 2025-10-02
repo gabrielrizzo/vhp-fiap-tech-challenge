@@ -3,8 +3,8 @@ from typing import Dict, Any
 from pathlib import Path
 
 class ConfigManager:
-    def __init__(self, config_file: str = "config/medical_tsp_config.json"):
-        self.config_file = Path(config_file).resolve()
+    def __init__(self, config_file: str = "./config/medical_tsp_config.json"):
+        self.config_file = Path(config_file)
         self.default_config = {
             "display": {
                 "width": 1500,
@@ -15,7 +15,7 @@ class ConfigManager:
             },
             "genetic_algorithm": {
                 "population_size": 2000,
-                "generation_limit": 1000,
+                "generation_limit": 10,
                 "n_cities": 48,
                 "n_exploration_generation": 1000,
                 "n_neighbors": 500
