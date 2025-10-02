@@ -40,7 +40,7 @@ class ConfigManager:
                 },
                 "vehicle_capacity": {
                     "enabled": True,
-                    "max_capacity": 10,
+                    "max_patients": 10,
                     "delivery_weight_per_city": 1.0,
                     "weight": 1.0
                 }
