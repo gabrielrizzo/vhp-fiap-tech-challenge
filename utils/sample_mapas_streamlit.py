@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
-from benchmark_hospitals_sp import hospitals_sp_data
-from genetic_algorithm import order_crossover, generate_random_population, calculate_fitness, sort_population, generate_nearest_neightbor, mutate_hard
+from data.benchmark_hospitals_sp import hospitals_sp_data
+from core.enhanced_genetic_algorithm  import order_crossover, generate_random_population, calculate_fitness, sort_population, generate_nearest_neightbor, mutate_hard
 from selection_functions import tournament_or_rank_based_selection
 import random
 import time
