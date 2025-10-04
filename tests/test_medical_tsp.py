@@ -28,7 +28,7 @@ def test_basic_functionality():
     print(f"✓ Basic test - Fuel Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
     from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
-    vehicle_capacity_restriction = VehicleCapacityRestriction(max_capacity=10)
+    vehicle_capacity_restriction = VehicleCapacityRestriction(max_patients_per_vehicle=10)
     is_valid = vehicle_capacity_restriction.validate_route(test_route)
     penalty = vehicle_capacity_restriction.calculate_penalty(test_route)
     print(f"✓ Basic test - Vehicle Capacity Restriction - Valid: {is_valid}, Penalty: {penalty}")

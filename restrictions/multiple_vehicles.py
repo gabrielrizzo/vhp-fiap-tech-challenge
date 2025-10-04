@@ -1,17 +1,34 @@
 from typing import List, Tuple, Dict, Any
 import math
 from core.base_restriction import BaseRestriction
+from utils.route_utils import RouteUtils
+
 
 class MultipleVehiclesRestriction(BaseRestriction):
+    """
+    Restrição para otimização de múltiplos veículos (ambulâncias).
+    
+    Esta restrição gerencia a distribuição de pacientes entre múltiplas ambulâncias,
+    otimizando rotas usando algoritmo do vizinho mais próximo e calculando métricas
+    de eficiência como utilização, tempo total e número de veículos necessários.
+    
+    Attributes:
+        max_vehicles (int): Número máximo de ambulâncias disponíveis
+        depot (Tuple[float, float]): Coordenadas do depósito/hospital base
+        vehicle_capacity (int): Capacidade de pacientes por veículo
+        vehicle_routes (Dict[int, List[Tuple[float, float]]]): Rotas de cada veículo
+        vehicle_times (Dict[int, float]): Tempos de cada rota
+    """
+    
     def __init__(self, max_vehicles: int = 5, depot: Tuple[float, float] = None, 
                  vehicle_capacity: int = 1):
         """
-        Inicializa a restrição de múltiplos veículos (ambulâncias).
+        Inicializa a restrição de múltiplos veículos.
         
-        Parâmetros:
-        - max_vehicles: Número máximo de ambulâncias disponíveis
-        - depot: Coordenadas (cidade) do depósito ou hospital base
-        - vehicle_capacity: Capacidade de pacientes por veículo (padrão: 1)
+        Args:
+            max_vehicles: Número máximo de ambulâncias disponíveis
+            depot: Coordenadas (cidade) do depósito ou hospital base
+            vehicle_capacity: Capacidade de pacientes por veículo
         """
         super().__init__("multiple_vehicles_restriction")
         self.max_vehicles = max_vehicles
@@ -29,8 +46,17 @@ class MultipleVehiclesRestriction(BaseRestriction):
         self.vehicle_capacity = capacity
     
     def _calculate_distance(self, point1: Tuple[float, float], point2: Tuple[float, float]) -> float:
-        """Calcula distância euclidiana entre dois pontos (cidades)."""
-        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+        """
+        Calcula distância euclidiana entre dois pontos (cidades).
+        
+        Args:
+            point1: Primeiro ponto (x, y)
+            point2: Segundo ponto (x, y)
+            
+        Returns:
+            Distância euclidiana entre os pontos
+        """
+        return RouteUtils.calculate_distance(point1, point2)
     
     def _create_optimized_route(self, depot: Tuple[float, float], 
                                patients: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
@@ -59,30 +85,35 @@ class MultipleVehiclesRestriction(BaseRestriction):
     
     def _calculate_route_time(self, route: List[Tuple[float, float]], speed_kmh: float = 50.0) -> float:
         """
-        Calcula o tempo total de uma rota 
-        Assumindo velocidade (speed_kmh) constante de 50 km/h (ajuste conforme necessário).
+        Calcula o tempo total de uma rota.
+        
+        Args:
+            route: Lista de coordenadas da rota
+            speed_kmh: Velocidade em km/h (padrão: 50)
+            
+        Returns:
+            Tempo total da rota em minutos
         """
-        if len(route) < 2:
-            return 0.0
-            
-        total_distance = 0.0
-        for i in range(len(route) - 1):
-            total_distance += self._calculate_distance(route[i], route[i + 1])
-            
-        time_hours = total_distance / speed_kmh
-        return time_hours * 60  # Retorna em minutos
+        return RouteUtils.calculate_route_time(route, speed_kmh)
     
     def _distribute_patients_to_vehicles(self, patients: List[Tuple[float, float]], 
                                         depot: Tuple[float, float]) -> Dict[int, List[Tuple[float, float]]]:
         """
         Distribui os pacientes entre as ambulâncias de forma otimizada.
         
-        Parâmetros:
-        - patients: Lista de coordenadas (cidades) dos pacientes
-        - depot: Coordenadas (cidade) do depósito ou hospital base
+        Usa algoritmo de distribuição sequencial respeitando a capacidade máxima
+        de cada veículo e otimiza as rotas usando algoritmo do vizinho mais próximo.
         
-        Retorna:
-        - Dict com as rotas (cidades) de cada ambulância
+        Args:
+            patients: Lista de coordenadas (cidades) dos pacientes
+            depot: Coordenadas (cidade) do depósito ou hospital base
+        
+        Returns:
+            Dict com as rotas (cidades) de cada ambulância
+            
+        Note:
+            O algoritmo distribui pacientes sequencialmente, garantindo que cada
+            veículo não exceda sua capacidade máxima.
         """
         # Limpa rotas anteriores
         self.vehicle_routes.clear()
@@ -95,21 +126,17 @@ class MultipleVehiclesRestriction(BaseRestriction):
         # Calcula quantas ambulâncias são necessárias
         n_patients = len(patients)
         n_vehicles_needed = min(
-            math.ceil(n_patients / self.vehicle_capacity),  # Capacidade configurável
+            math.ceil(n_patients / self.vehicle_capacity),
             self.max_vehicles
         )
         
-        # Distribui pacientes entre ambulâncias usando algoritmo de clustering simples
-        patients_per_vehicle = n_patients // n_vehicles_needed
-        remaining_patients = n_patients % n_vehicles_needed
-        
+        # Distribui pacientes respeitando a capacidade máxima por veículo
         patient_index = 0
         for vehicle_id in range(n_vehicles_needed):
-            # Calcula quantos pacientes esta ambulância vai atender
-            vehicle_patient_count = patients_per_vehicle
-            if vehicle_id < remaining_patients:
-                vehicle_patient_count += 1
-                
+            # Calcula quantos pacientes esta ambulância pode atender
+            remaining_patients = n_patients - patient_index
+            vehicle_patient_count = min(self.vehicle_capacity, remaining_patients)
+            
             # Atribui pacientes a esta ambulância
             vehicle_patients = patients[patient_index:patient_index + vehicle_patient_count]
             patient_index += vehicle_patient_count
@@ -246,5 +273,22 @@ class MultipleVehiclesRestriction(BaseRestriction):
             'total_time': self.get_total_time(),
             'average_time': self.get_average_time(),
             'average_utilization': self.get_average_utilization(),
-            'vehicle_utilization': self.get_vehicle_utilization()
+            'vehicle_utilization': self.get_vehicle_utilization(),
+            'vehicle_capacity': self.vehicle_capacity
         }
+    
+    def get_vehicle_data_for_capacity_restriction(self) -> Dict[str, Any]:
+        """
+        Retorna dados do veículo para integração com VehicleCapacityRestriction.
+        
+        Returns:
+            Dicionário com dados necessários para integração:
+                - vehicle_capacity: Capacidade de pacientes por veículo
+                - depot: Coordenadas do depósito/hospital
+                - max_vehicles: Número máximo de veículos disponíveis
+        """
+        return RouteUtils.get_vehicle_data_template(
+            vehicle_capacity=self.vehicle_capacity,
+            depot=self.depot,
+            max_vehicles=self.max_vehicles
+        )
