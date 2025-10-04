@@ -2,7 +2,6 @@ import random
 import math
 import copy 
 from typing import List, Tuple, Dict, Any
-from scipy.spatial import ConvexHull
 import numpy as np
 from core.restriction_manager import RestrictionManager
 from utils.route_utils import RouteUtils
