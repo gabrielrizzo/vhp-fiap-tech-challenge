@@ -8,7 +8,7 @@ def test_imports():
         from core.base_restriction import BaseRestriction
         from core.restriction_manager import RestrictionManager
         from restrictions.fuel_restriction import FuelRestriction
-        from restrictions.ambulance_patient_restriction import VehicleWeightRestriction
+        from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
         from restrictions.route_cost_restriction import RouteCostRestriction
         from restrictions.multiple_vehicles import MultipleVehiclesRestriction
         from restrictions.fixed_start_restriction import FixedStartRestriction
@@ -27,10 +27,10 @@ def test_basic_functionality():
     penalty = fuel_restriction.calculate_penalty(test_route)
     print(f"✓ Basic test - Fuel Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
-    from restrictions.ambulance_patient_restriction import AmbulancePatientRestriction
-    vehicle_patient_restriction = AmbulancePatientRestriction(max_patients=10)
-    is_valid = vehicle_patient_restriction.validate_route(test_route)
-    penalty = vehicle_patient_restriction.calculate_penalty(test_route)
+    from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
+    vehicle_capacity_restriction = VehicleCapacityRestriction(max_patients_per_vehicle=10)
+    is_valid = vehicle_capacity_restriction.validate_route(test_route)
+    penalty = vehicle_capacity_restriction.calculate_penalty(test_route)
     print(f"✓ Basic test - Vehicle Capacity Restriction - Valid: {is_valid}, Penalty: {penalty}")
 
     from restrictions.fixed_start_restriction import FixedStartRestriction

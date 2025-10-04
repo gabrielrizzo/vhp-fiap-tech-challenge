@@ -1,16 +1,19 @@
 import numpy as np
 import random
 from typing import List, Tuple
+from utils.route_utils import RouteUtils
 
 def calculate_fitness(individual):
-    # This should be imported from genetic algorithm
-    distance = 0
-    n = len(individual)
-    for i in range(n):
-        current = individual[i]
-        next_point = individual[(i + 1) % n]
-        distance += ((current[0] - next_point[0]) ** 2 + (current[1] - next_point[1]) ** 2) ** 0.5
-    return distance
+    """
+    Calcula fitness de um indivíduo usando RouteUtils otimizado.
+    
+    Args:
+        individual: Lista de coordenadas da rota
+        
+    Returns:
+        Distância total da rota
+    """
+    return RouteUtils.calculate_route_distance(individual)
 
 def random_fitness_probability(population_fitness, population):
     probability = 1 / np.array(population_fitness)

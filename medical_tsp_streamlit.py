@@ -11,7 +11,7 @@ from core.restriction_manager import RestrictionManager
 from core.config_manager import ConfigManager
 from restrictions.fuel_restriction import FuelRestriction
 from restrictions.route_cost_restriction import RouteCostRestriction
-from restrictions.ambulance_patient_restriction import AmbulancePatientRestriction
+from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
 from restrictions.multiple_vehicles import MultipleVehiclesRestriction
 from llm.llm_integration import LLMIntegration
 # from utils.draw_functions import draw_paths, draw_plot, draw_cities  # pygame specific
@@ -129,7 +129,7 @@ class MedicalRouteTSP:
         fuel_restriction.set_weight(fuel_config.get("weight", 1.0))
         
         # Create vehicle capacity restriction with config values
-        capacity_restriction = AmbulancePatientRestriction(
+        capacity_restriction = VehicleCapacityRestriction(
             max_patients=capacity_config.get("max_patients", 10),
             vehicle_data={'city_patients': {'1352_224': 1, '1423_195': 1}}
         )
@@ -393,7 +393,7 @@ class MedicalRouteTSP:
                 fuel_info = fuel_restriction.get_fuel_consumption([(0,0), (100,0)])
                 print(f"Fuel restriction: max {fuel_restriction.max_distance}km, cost {fuel_restriction.fuel_cost_per_km}/km")
                 print(f"Fuel Cost Limit: R$ {fuel_restriction.fuel_cost_limit}")
-            elif restriction.name == "ambulance_patient_restriction":
+            elif restriction.name == "vehicle_capacity_restriction":
                 capacity_restriction = restriction
                 print(f"Vehicle capacity: max {capacity_restriction.max_patients} deliveries")
             elif restriction.name == "route_cost_restriction":
@@ -479,7 +479,7 @@ with col3:
     for restriction in optimizer.ga.restriction_manager.restrictions:
         if restriction.name == "fuel_restriction":
             restrictions_summary.append(f"Combustível: {restriction.max_distance}km")
-        elif restriction.name == "ambulance_patient_restriction":
+        elif restriction.name == "vehicle_capacity_restriction":
             restrictions_summary.append(f"Capacidade: {restriction.max_patients}")
     if restrictions_summary:
         st.caption(" | ".join(restrictions_summary[:2]))
@@ -750,7 +750,7 @@ Restrições ativas: {optimizer.ga.restriction_manager.get_active_restrictions()
                 fuel_restriction = restriction
                 config_info += f"\nRestrição de combustível: max {fuel_restriction.max_distance}km, custo {fuel_restriction.fuel_cost_per_km}/km"
                 config_info += f"\nLimite de custo de combustível: R$ {fuel_restriction.fuel_cost_limit}"
-            elif restriction.name == "ambulance_patient_restriction":
+            elif restriction.name == "vehicle_capacity_restriction":
                 capacity_restriction = restriction
                 config_info += f"\nCapacidade do veículo: max {capacity_restriction.max_patients} entregas"
             elif restriction.name == "route_cost_restriction":

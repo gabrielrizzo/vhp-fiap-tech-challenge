@@ -5,15 +5,15 @@ import os
 # Adiciona o diretório raiz ao path para importar os módulos
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from restrictions.ambulance_patient_restriction import AmbulancePatientRestriction
+from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
 
 
-class TestAmbulancePatientRestriction(unittest.TestCase):
-    """Testes unitários para a classe AmbulancePatientRestriction"""
+class TestVehicleCapacityRestriction(unittest.TestCase):
+    """Testes unitários para a classe VehicleCapacityRestriction"""
 
     def setUp(self):
         """Configuração inicial para cada teste"""
-        self.restriction = AmbulancePatientRestriction()
+        self.restriction = VehicleCapacityRestriction()
         self.sample_route = [(0.0, 0.0), (1.0, 1.0), (2.0, 2.0)]
         self.sample_vehicle_data = {
             'city_patients': {
@@ -25,14 +25,14 @@ class TestAmbulancePatientRestriction(unittest.TestCase):
     
     def test_initialization_default_values(self):
         """Testa inicialização com valores padrão"""
-        restriction = AmbulancePatientRestriction()
-        self.assertEqual(restriction.name, "ambulance_patient_restriction")
+        restriction = VehicleCapacityRestriction()
+        self.assertEqual(restriction.name, "vehicle_capacity_restriction")
         self.assertEqual(restriction.max_patients, 10)
         self.assertTrue(restriction.is_enabled())
     
     def test_initialization_custom_values(self):
         """Testa inicialização com valores customizados"""
-        restriction = AmbulancePatientRestriction(max_patients=20)
+        restriction = VehicleCapacityRestriction(max_patients=20)
         self.assertEqual(restriction.max_patients, 20)
     
     def test_calculate_total_patients_with_vehicle_data(self):
@@ -88,7 +88,7 @@ class TestAmbulancePatientRestriction(unittest.TestCase):
     def test_validate_route_invalid_patients(self):
         """Testa validação de rota com número inválido de pacientes"""
         # Cria restrição com capacidade menor
-        restriction = AmbulancePatientRestriction(max_patients=5)
+        restriction = VehicleCapacityRestriction(max_patients=5)
         is_valid = restriction.validate_route(
             self.sample_route, 
             self.sample_vehicle_data
@@ -122,7 +122,7 @@ class TestAmbulancePatientRestriction(unittest.TestCase):
     def test_calculate_penalty_with_excess(self):
         """Testa cálculo de penalidade com excesso de pacientes"""
         # Cria restrição com capacidade menor
-        restriction = AmbulancePatientRestriction(max_patients=5)
+        restriction = VehicleCapacityRestriction(max_patients=5)
         penalty = restriction.calculate_penalty(
             self.sample_route, 
             self.sample_vehicle_data
@@ -165,7 +165,7 @@ class TestAmbulancePatientRestriction(unittest.TestCase):
     
     def test_get_capacity_info_invalid_route(self):
         """Testa obtenção de informações de capacidade para rota inválida"""
-        restriction = AmbulancePatientRestriction(max_patients=5)
+        restriction = VehicleCapacityRestriction(max_patients=5)
         info = restriction.get_capacity_info(
             self.sample_route, 
             self.sample_vehicle_data
@@ -197,7 +197,7 @@ class TestAmbulancePatientRestriction(unittest.TestCase):
     
     def test_get_capacity_info_zero_capacity(self):
         """Testa obtenção de informações com capacidade máxima zero"""
-        restriction = AmbulancePatientRestriction(max_patients=0)
+        restriction = VehicleCapacityRestriction(max_patients=0)
         info = restriction.get_capacity_info(self.sample_route)
         
         # Com capacidade zero, utilization deve ser 0 para evitar divisão por zero

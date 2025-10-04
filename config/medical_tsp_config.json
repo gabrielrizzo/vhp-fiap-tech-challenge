@@ -35,7 +35,7 @@
         },
         "vehicle_capacity": {
             "enabled": true,
-            "max_patients": 10,
+            "max_capacity": 10,
             "weight": 1.0
         },
          "fixed_start": {
@@ -50,7 +50,6 @@
         "multiple_vehicles": {
             "enabled": true,
             "max_vehicles": 20,
-            "vehicle_capacity": 1,
             "weight": 2.0
         }
     },

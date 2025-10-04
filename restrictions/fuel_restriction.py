@@ -1,6 +1,7 @@
 from typing import List, Tuple, Dict, Any
 import math
 from core.base_restriction import BaseRestriction
+from utils.route_utils import RouteUtils
 
 class FuelRestriction(BaseRestriction):
     def __init__(
@@ -17,21 +18,17 @@ class FuelRestriction(BaseRestriction):
         self.pixel_to_km_factor = pixel_to_km_factor
 
     def _calculate_total_distance(self, route: List[Tuple[float, float]]) -> float:
-        if len(route) < 2:
-            return 0.0
-
-        total_distance = 0.0
-        n = len(route)
-
-        for i in range(n):
-            current = route[i]
-            next_point = route[(i + 1) % n]
-            distance = math.sqrt((current[0] - next_point[0]) ** 2 + (current[1] - next_point[1]) ** 2)
-            total_distance += distance
-
-        # Multiplicando a distância euclidiana pelo fator para termos a conversão para Km
-        return total_distance * self.pixel_to_km_factor
-
+        """
+        Calcula distância total da rota usando RouteUtils otimizado.
+        
+        Args:
+            route: Lista de coordenadas da rota
+            
+        Returns:
+            Distância total da rota
+        """
+        return RouteUtils.calculate_route_distance(route) * self.pixel_to_km_factor
+    
     def validate_route(self, route: List[Tuple[float, float]], vehicle_data: Dict[str, Any] = None) -> bool:
         total_distance = self._calculate_total_distance(route)
         fuel_cost = total_distance * self.fuel_cost_per_km
