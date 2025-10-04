@@ -158,7 +158,7 @@ class MedicalRouteTSP:
         # Create multiple vehicles restriction
         if multiple_vehicles_config.get("enabled", False):
             # Usa a capacidade da restrição de capacidade se disponível, senão usa 1
-            vehicle_capacity = capacity_config.get("max_patients", 1) if capacity_config.get("enabled", False) else 1
+            vehicle_capacity = capacity_config.get("max_capacity", 1) if capacity_config.get("enabled", False) else 1
             
             multiple_vehicles_restriction = MultipleVehiclesRestriction(
                 max_vehicles=multiple_vehicles_config.get("max_vehicles", 5),
