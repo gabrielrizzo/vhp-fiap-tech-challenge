@@ -133,8 +133,7 @@ class MedicalRouteTSP:
         
         # Create vehicle capacity restriction with config values
         capacity_restriction = VehicleCapacityRestriction(
-            max_capacity=capacity_config.get("max_capacity", 10),
-            delivery_weight_per_city=capacity_config.get("delivery_weight_per_city", 1.0)
+            max_patients_per_vehicle=capacity_config.get("max_capacity", 10)
         )
         capacity_restriction.set_weight(capacity_config.get("weight", 1.0))
 
@@ -159,7 +158,7 @@ class MedicalRouteTSP:
         # Create multiple vehicles restriction
         if multiple_vehicles_config.get("enabled", False):
             # Usa a capacidade da restrição de capacidade se disponível, senão usa 1
-            vehicle_capacity = capacity_config.get("max_capacity", 1) if capacity_config.get("enabled", False) else 1
+            vehicle_capacity = capacity_config.get("max_patients", 1) if capacity_config.get("enabled", False) else 1
             
             multiple_vehicles_restriction = MultipleVehiclesRestriction(
                 max_vehicles=multiple_vehicles_config.get("max_vehicles", 5),
@@ -247,10 +246,11 @@ class MedicalRouteTSP:
             
         return population
         
-    def evaluate_population(self, population):
+    def evaluate_population(self, population, vehicle_data_list=None):
         population_fitness = []
-        for individual in population:
-            fitness = self.ga.calculate_fitness_with_restrictions(individual)
+        for i, individual in enumerate(population):
+            vehicle_data = vehicle_data_list[i] if vehicle_data_list else None
+            fitness = self.ga.calculate_fitness_with_restrictions(individual, vehicle_data)
             population_fitness.append(fitness)
             
         return self.ga.sort_population(population, population_fitness)
@@ -369,6 +369,9 @@ class MedicalRouteTSP:
         population = self.create_initial_population()
         running = True
         
+        # Carrega configuração de múltiplos veículos
+        multiple_vehicles_config = self.config.get("restrictions.multiple_vehicles", {})
+        
         print("Starting Medical Route TSP Optimizer...")
         print("Controls:")
         print("  Q - Quit")
@@ -393,12 +396,23 @@ class MedicalRouteTSP:
                         
             generation = next(self.generation_counter)
             
-            population, population_fitness = self.evaluate_population(population)
+            # Prepara dados do veículo para integração das restrições
+            vehicle_data = None
+            if multiple_vehicles_config.get("enabled", False):
+                multiple_vehicles_restriction = self.ga.restriction_manager.get_restriction("multiple_vehicles_restriction")
+                if multiple_vehicles_restriction:
+                    vehicle_data = multiple_vehicles_restriction.get_vehicle_data_for_capacity_restriction()
+            
+            # Cria lista de vehicle_data para cada indivíduo
+            vehicle_data_list = [vehicle_data] * len(population) if vehicle_data else None
+            
+            population, population_fitness = self.evaluate_population(population, vehicle_data_list)
             best_fitness = population_fitness[0]
             best_solution = population[0]
             
             current_diversity = population_edge_diversity(population)
-            stats = self.ga.get_population_statistics(population)
+            
+            stats = self.ga.get_population_statistics(population, vehicle_data_list)
             
             self.track_progress(best_fitness, best_solution)
             self.update_exploration_phase(generation)
@@ -491,7 +505,7 @@ class MedicalRouteTSP:
                 print(f"Fuel Cost Limit: R$ {fuel_restriction.fuel_cost_limit}")
             elif restriction.name == "vehicle_capacity_restriction":
                 capacity_restriction = restriction
-                print(f"Vehicle capacity: max {capacity_restriction.max_capacity} deliveries")
+                print(f"Vehicle capacity: max {capacity_restriction.max_patients_per_vehicle} patients per vehicle")
             elif restriction.name == "route_cost_restriction":
                 route_cost_restriction = restriction
                 print(f"Route cost: {route_cost_restriction.route_cost_dict}")

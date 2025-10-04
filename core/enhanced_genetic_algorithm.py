@@ -2,9 +2,9 @@ import random
 import math
 import copy 
 from typing import List, Tuple, Dict, Any
-from scipy.spatial import ConvexHull
 import numpy as np
 from core.restriction_manager import RestrictionManager
+from utils.route_utils import RouteUtils
 
 class EnhancedGeneticAlgorithm:
     def __init__(self, cities_locations: List[Tuple[float, float]]):
@@ -12,11 +12,16 @@ class EnhancedGeneticAlgorithm:
         self.restriction_manager = RestrictionManager()
         
     def calculate_base_fitness(self, path: List[Tuple[float, float]]) -> float:
-        distance = 0
-        n = len(path)
-        for i in range(n):
-            distance += self.calculate_distance(path[i], path[(i + 1) % n])
-        return distance
+        """
+        Calcula fitness base (distância total) usando RouteUtils otimizado.
+        
+        Args:
+            path: Lista de coordenadas da rota
+            
+        Returns:
+            Distância total da rota
+        """
+        return RouteUtils.calculate_route_distance(path)
     
     def calculate_fitness_with_restrictions(self, path: List[Tuple[float, float]], 
                                          vehicle_data: Dict[str, Any] = None) -> float:
@@ -27,7 +32,17 @@ class EnhancedGeneticAlgorithm:
     
     @staticmethod
     def calculate_distance(point1: Tuple[float, float], point2: Tuple[float, float]) -> float:
-        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+        """
+        Calcula distância entre dois pontos usando RouteUtils (com cache).
+        
+        Args:
+            point1: Primeiro ponto (x, y)
+            point2: Segundo ponto (x, y)
+            
+        Returns:
+            Distância euclidiana entre os pontos
+        """
+        return RouteUtils.calculate_distance(point1, point2)
     
     def generate_random_population(self, population_size: int) -> List[List[Tuple[float, float]]]:
         return [random.sample(self.cities_locations, len(self.cities_locations)) 

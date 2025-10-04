@@ -7,7 +7,7 @@
         "plot_x_offset": 450
     },
     "genetic_algorithm": {
-        "population_size": 500,
+        "population_size": 100,
         "generation_limit": 100,
         "n_cities": 48,
         "n_exploration_generation": 1000,
@@ -36,7 +36,6 @@
         "vehicle_capacity": {
             "enabled": true,
             "max_capacity": 10,
-            "delivery_weight_per_city": 1.0,
             "weight": 1.0
         },
          "fixed_start": {
@@ -51,7 +50,6 @@
         "multiple_vehicles": {
             "enabled": true,
             "max_vehicles": 20,
-            "vehicle_capacity": 1,
             "weight": 2.0
         },
         "forbidden_routes": {

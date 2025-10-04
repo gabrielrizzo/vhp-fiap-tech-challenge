@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from typing import List, Tuple
+from utils.route_utils import RouteUtils
 
 def get_duplicated_items(list):
     duplicates = [i for i in set(list) if list.count(i) > 1]
@@ -97,13 +98,16 @@ def fast_diversity_aware_selection(population: List[Tuple[float, float]], popula
     return parent1, parent2
 
 def calculate_fitness(individual):
-    distance = 0
-    n = len(individual)
-    for i in range(n):
-        current = individual[i]
-        next_point = individual[(i + 1) % n]
-        distance += ((current[0] - next_point[0]) ** 2 + (current[1] - next_point[1]) ** 2) ** 0.5
-    return distance
+    """
+    Calcula fitness de um indivíduo usando RouteUtils otimizado.
+    
+    Args:
+        individual: Lista de coordenadas da rota
+        
+    Returns:
+        Distância total da rota
+    """
+    return RouteUtils.calculate_route_distance(individual)
 
 def generate_nearest_neighbor(cities_locations, initial_city):
     import copy
@@ -118,7 +122,7 @@ def generate_nearest_neighbor(cities_locations, initial_city):
         lowest_distance_index = -1
 
         for index, city in enumerate(local_list):
-            distance = calculate_distance(initial_population[-1], city)
+            distance = RouteUtils.calculate_distance(initial_population[-1], city)
 
             if distance < lowest_distance and city not in initial_population:
                 lowest_distance = distance
@@ -132,8 +136,17 @@ def generate_nearest_neighbor(cities_locations, initial_city):
     return initial_population
 
 def calculate_distance(point1, point2):
-    import math
-    return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+    """
+    Calcula distância entre dois pontos usando RouteUtils (com cache).
+    
+    Args:
+        point1: Primeiro ponto (x, y)
+        point2: Segundo ponto (x, y)
+        
+    Returns:
+        Distância euclidiana entre os pontos
+    """
+    return RouteUtils.calculate_distance(point1, point2)
 
 def mutate_hard(solution, mutation_probability, intensity=7):
     import copy
