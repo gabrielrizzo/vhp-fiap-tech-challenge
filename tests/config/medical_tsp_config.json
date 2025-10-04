@@ -7,8 +7,8 @@
         "plot_x_offset": 450
     },
     "genetic_algorithm": {
-        "population_size": 100,
-        "generation_limit": 100,
+        "population_size": 2000,
+        "generation_limit": 10000,
         "n_cities": 48,
         "n_exploration_generation": 1000,
         "n_neighbors": 500
@@ -29,48 +29,13 @@
             "enabled": true,
             "max_distance": 250.0,
             "fuel_cost_per_km": 0.8,
-            "fuel_cost_limit": 300,
-            "pixel_to_km_factor": 0.02,
             "weight": 1.0
         },
         "vehicle_capacity": {
             "enabled": true,
             "max_capacity": 10,
+            "delivery_weight_per_city": 1.0,
             "weight": 1.0
-        },
-         "fixed_start": {
-            "enabled": true,
-            "weight": 5.0,
-            "hospital_is_first_city": true
-        },
-        "route_cost":{
-            "enabled": true,
-            "weight": 1
-        },
-        "multiple_vehicles": {
-            "enabled": true,
-            "max_vehicles": 20,
-            "weight": 2.0
-        },
-        "forbidden_routes": {
-            "enabled": true,
-            "base_distance_penalty": 1000.0,
-            "weight": 1.0,
-            "routes": [
-                {"from": 0, "to": 5},
-                {"from": 10, "to": 20},
-                {"from": 15, "to": 25}
-            ]
-        },
-        "one_way_routes": {
-            "enabled": true,
-            "base_distance_penalty": 1000.0,
-            "weight": 1.0,
-            "routes": [
-                {"from": 1, "to": 2},
-                {"from": 8, "to": 12},
-                {"from": 30, "to": 35}
-            ]
         }
     },
     "llm": {
