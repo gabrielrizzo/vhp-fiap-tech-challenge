@@ -144,7 +144,7 @@ class MedicalRouteTSP:
             fuel_max_distance = self.sidebar_config.get('fuel_max_distance', 250.0)
             fuel_cost_per_km = self.sidebar_config.get('fuel_cost_per_km', 0.8)
             fuel_cost_limit = self.sidebar_config.get('fuel_cost_limit', 300.0)
-            max_patients = self.sidebar_config.get('max_patients', 10)
+            max_patients = self.sidebar_config.get('max_capacity', 10)
             max_vehicles_count = self.sidebar_config.get('max_vehicles', 5)
  
             print(f"DEBUG - Using sidebar config:")
@@ -164,7 +164,7 @@ class MedicalRouteTSP:
             fuel_max_distance = fuel_config.get("max_distance", 250.0)
             fuel_cost_per_km = fuel_config.get("fuel_cost_per_km", 0.8)
             fuel_cost_limit = fuel_config.get("fuel_cost_limit", None)
-            max_patients = capacity_config.get("max_patients", 10)
+            max_patients = capacity_config.get("max_capacity", 10)
             max_vehicles_count = multiple_vehicles_config.get("max_vehicles", 5)
  
             print(f"DEBUG - Using config.json (no sidebar)")
@@ -450,7 +450,7 @@ if 'generation' not in st.session_state or st.session_state.get('dataset_type') 
     if capacity_enabled:
         sidebar_config.update({
             'capacity_enabled': capacity_enabled,
-            'max_patients': max_patients if capacity_enabled else 10,
+            'max_capacity': max_patients if capacity_enabled else 10,
         })
     else:
         sidebar_config['capacity_enabled'] = False
