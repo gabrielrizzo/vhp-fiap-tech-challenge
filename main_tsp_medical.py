@@ -174,11 +174,33 @@ class MedicalRouteTSP:
         )
         forbidden_routes_restriction.set_weight(forbidden_routes_config.get("weight", 1.0))
         
+        # Carregar rotas proibidas da configuração
+        forbidden_routes_list = forbidden_routes_config.get("routes", [])
+        for route in forbidden_routes_list:
+            from_idx = route.get("from")
+            to_idx = route.get("to")
+            if from_idx is not None and to_idx is not None and from_idx < len(self.cities_locations) and to_idx < len(self.cities_locations):
+                forbidden_routes_restriction.add_forbidden_route(
+                    self.cities_locations[from_idx], 
+                    self.cities_locations[to_idx]
+                )
+        
         # Create one way routes restriction
         one_way_routes_restriction = OneWayRoutes(
             base_distance_penalty=one_way_routes_config.get("base_distance_penalty", 1000.0)
         )
         one_way_routes_restriction.set_weight(one_way_routes_config.get("weight", 1.0))
+        
+        # Carregar rotas unidirecionais da configuração
+        one_way_routes_list = one_way_routes_config.get("routes", [])
+        for route in one_way_routes_list:
+            from_idx = route.get("from")
+            to_idx = route.get("to")
+            if from_idx is not None and to_idx is not None and from_idx < len(self.cities_locations) and to_idx < len(self.cities_locations):
+                one_way_routes_restriction.add_one_way_route(
+                    self.cities_locations[from_idx], 
+                    self.cities_locations[to_idx]
+                )
         
         # Add restrictions if enabled
         if fuel_config.get("enabled", True):

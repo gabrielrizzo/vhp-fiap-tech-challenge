@@ -57,12 +57,22 @@
         "forbidden_routes": {
             "enabled": true,
             "base_distance_penalty": 1000.0,
-            "weight": 1.0
+            "weight": 1.0,
+            "routes": [
+                {"from": 0, "to": 5},
+                {"from": 10, "to": 20},
+                {"from": 15, "to": 25}
+            ]
         },
         "one_way_routes": {
             "enabled": true,
             "base_distance_penalty": 1000.0,
-            "weight": 1.0
+            "weight": 1.0,
+            "routes": [
+                {"from": 1, "to": 2},
+                {"from": 8, "to": 12},
+                {"from": 30, "to": 35}
+            ]
         }
     },
     "llm": {
