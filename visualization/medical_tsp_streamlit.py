@@ -404,11 +404,6 @@ class MedicalRouteTSP:
         print(f"\n=== FINAL OPTIMIZATION REPORT ===")
         print(f"Total generations: {len(self.best_fitness_values)}")
         print(f"Best fitness achieved: {min(self.best_fitness_values):.2f}")
-        if self.fitness_target_solution:
-            print(f"Target fitness: {self.fitness_target_solution:.2f}")
-            improvement = ((self.fitness_target_solution - min(self.best_fitness_values)) / 
-                          self.fitness_target_solution * 100)
-            print(f"Improvement over target: {improvement:.1f}%")
  
         final_stats = self.ga.get_population_statistics([self.best_solutions[-1]])
         print(f"Final solution statistics: {final_stats}")
@@ -617,7 +612,9 @@ with col3:
 # Main layout
 st.subheader("🗺️ Visualização da Rota")
 map_placeholder = st.empty()
- 
+
+st.text("")
+st.divider()
 st.subheader("📈 Evolução do Fitness")
 fitness_placeholder = st.empty()
  
@@ -876,20 +873,16 @@ if optimizer.best_solutions:
                 'route_id': i,
                 'distance': fitness,
                 'time': fitness / 50,
-                'efficiency': max(0, 100 - (fitness / optimizer.fitness_target_solution * 100 - 100)) if optimizer.fitness_target_solution else 0,
                 'violations': []
             })
  
         total_distance = sum(r['distance'] for r in routes_data)
-        avg_efficiency = sum(r['efficiency'] for r in routes_data) / len(routes_data) if routes_data else 0
  
         report = f"""=== RELATÓRIO DE PERFORMANCE DAS ROTAS MÉDICAS ===
  
 RESUMO EXECUTIVO:
 - Total de rotas executadas: {len(routes_data)}
 - Distância total percorrida: {total_distance:.2f}
-- Eficiência média: {avg_efficiency:.1f}%
-- Taxa de problemas: 0.0%
  
 ANÁLISE DE PERFORMANCE:
 O sistema de otimização está funcionando adequadamente. 
@@ -943,16 +936,11 @@ if st.session_state.generation >= optimizer.GENERATION_LIMIT:
             st.code(f"Population Statistics: {final_stats}")
  
             best_fitness = min(optimizer.best_fitness_values) if optimizer.best_fitness_values else 0
-            target_fitness = optimizer.fitness_target_solution if optimizer.fitness_target_solution else best_fitness
-            improvement = ((target_fitness - best_fitness) / target_fitness * 100) if target_fitness > 0 else 0
  
             final_report = f"""=== RELATÓRIO FINAL DE OTIMIZAÇÃO ===
 Total de gerações: {len(optimizer.best_fitness_values)}
 Melhor fitness alcançado: {best_fitness:.2f}
-Fitness alvo: {target_fitness:.2f}
-Melhoria sobre o alvo: {improvement:.1f}%
 Estatísticas da solução final: {final_stats}
- 
 Configuração utilizada:
 - Tamanho da população: {optimizer.POPULATION_SIZE}
 - Limite de gerações: {optimizer.GENERATION_LIMIT}
