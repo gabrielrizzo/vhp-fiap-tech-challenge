@@ -6,18 +6,21 @@ from utils.route_utils import RouteUtils
 
 class MultipleVehiclesRestriction(BaseRestriction):
     """
-    Restrição para otimização de múltiplos veículos (ambulâncias).
+    Restrição de múltiplos veículos (frota) para TSP médico (ambulâncias).
     
-    Esta restrição gerencia a distribuição de pacientes entre múltiplas ambulâncias,
-    otimizando rotas usando algoritmo do vizinho mais próximo e calculando métricas
-    de eficiência como utilização, tempo total e número de veículos necessários.
+    Objetivo
+    - Distribuir pacientes entre veículos respeitando capacidade, gerando para cada veículo
+      uma rota simples (vizinho mais próximo) e métricas úteis (tempo, utilização, veículos usados).
     
-    Attributes:
-        max_vehicles (int): Número máximo de ambulâncias disponíveis
-        depot (Tuple[float, float]): Coordenadas do depósito/hospital base
-        vehicle_capacity (int): Capacidade de pacientes por veículo
-        vehicle_routes (Dict[int, List[Tuple[float, float]]]): Rotas de cada veículo
-        vehicle_times (Dict[int, float]): Tempos de cada rota
+    Parâmetros principais
+    - `max_vehicles`: máximo de veículos disponíveis
+    - `depot`: depósito/hospital (início/fim das rotas)
+    - `vehicle_capacity`: capacidade por veículo
+    
+    Integração
+    - Exponibiliza `vehicle_data` para outras restrições (p.ex., capacidade), incluindo:
+      `vehicle_capacity`, `depot`, `max_vehicles`, e, quando rota é fornecida, também
+      `vehicles_used` e `unserved_patients`.
     """
     
     def __init__(self, max_vehicles: int = 5, depot: Tuple[float, float] = None, 
@@ -36,6 +39,15 @@ class MultipleVehiclesRestriction(BaseRestriction):
         self.vehicle_capacity = vehicle_capacity
         self.vehicle_routes: Dict[int, List[Tuple[float, float]]] = {}
         self.vehicle_times: Dict[int, float] = {}
+        
+    def _get_effective_params(self, vehicle_data: Dict[str, Any] = None) -> Tuple[int, Tuple[float, float], int]:
+        """Retorna (vehicle_capacity, depot, max_vehicles) considerando overrides de vehicle_data."""
+        if not vehicle_data:
+            return self.vehicle_capacity, self.depot, self.max_vehicles
+        capacity = vehicle_data.get('vehicle_capacity', self.vehicle_capacity)
+        depot = vehicle_data.get('depot', self.depot)
+        max_vehicles = vehicle_data.get('max_vehicles', self.max_vehicles)
+        return capacity, depot, max_vehicles
         
     def set_depot(self, depot: Tuple[float, float]):
         """Define qual cidade é o depósito/hospital base"""
@@ -61,7 +73,7 @@ class MultipleVehiclesRestriction(BaseRestriction):
     def _create_optimized_route(self, depot: Tuple[float, float], 
                                patients: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
         """
-        Cria uma rota otimizada para uma ambulância usando algoritmo do vizinho mais próximo.
+        Cria uma rota simples por vizinho mais próximo: depot -> pacientes -> depot.
         """
         if not patients:
             return [depot]
@@ -85,7 +97,7 @@ class MultipleVehiclesRestriction(BaseRestriction):
     
     def _calculate_route_time(self, route: List[Tuple[float, float]], speed_kmh: float = 50.0) -> float:
         """
-        Calcula o tempo total de uma rota.
+        Calcula tempo total (min) de uma rota.
         
         Args:
             route: Lista de coordenadas da rota
@@ -97,12 +109,12 @@ class MultipleVehiclesRestriction(BaseRestriction):
         return RouteUtils.calculate_route_time(route, speed_kmh)
     
     def _distribute_patients_to_vehicles(self, patients: List[Tuple[float, float]], 
-                                        depot: Tuple[float, float]) -> Dict[int, List[Tuple[float, float]]]:
+                                        depot: Tuple[float, float],
+                                        vehicle_capacity: int,
+                                        max_vehicles: int) -> Dict[int, List[Tuple[float, float]]]:
         """
-        Distribui os pacientes entre as ambulâncias de forma otimizada.
-        
-        Usa algoritmo de distribuição sequencial respeitando a capacidade máxima
-        de cada veículo e otimiza as rotas usando algoritmo do vizinho mais próximo.
+        Distribui pacientes sequencialmente por veículo até capacidade ou limite de frota,
+        criando rotas individuais por vizinho mais próximo.
         
         Args:
             patients: Lista de coordenadas (cidades) dos pacientes
@@ -111,9 +123,7 @@ class MultipleVehiclesRestriction(BaseRestriction):
         Returns:
             Dict com as rotas (cidades) de cada ambulância
             
-        Note:
-            O algoritmo distribui pacientes sequencialmente, garantindo que cada
-            veículo não exceda sua capacidade máxima.
+        Observação: distribuição gulosa/sequencial suficiente para penalização/relatórios.
         """
         # Limpa rotas anteriores
         self.vehicle_routes.clear()
@@ -123,19 +133,17 @@ class MultipleVehiclesRestriction(BaseRestriction):
         if not patients:
             return self.vehicle_routes
             
-        # Calcula quantas ambulâncias são necessárias
+        # Calcula quantas ambulâncias seriam necessárias e quantas podem ser usadas
         n_patients = len(patients)
-        n_vehicles_needed = min(
-            math.ceil(n_patients / self.vehicle_capacity),
-            self.max_vehicles
-        )
+        vehicles_needed = math.ceil(n_patients / vehicle_capacity) if vehicle_capacity > 0 else 0
+        n_vehicles_to_use = min(vehicles_needed, max_vehicles)
         
         # Distribui pacientes respeitando a capacidade máxima por veículo
         patient_index = 0
-        for vehicle_id in range(n_vehicles_needed):
+        for vehicle_id in range(n_vehicles_to_use):
             # Calcula quantos pacientes esta ambulância pode atender
             remaining_patients = n_patients - patient_index
-            vehicle_patient_count = min(self.vehicle_capacity, remaining_patients)
+            vehicle_patient_count = min(vehicle_capacity, remaining_patients)
             
             # Atribui pacientes a esta ambulância
             vehicle_patients = patients[patient_index:patient_index + vehicle_patient_count]
@@ -154,52 +162,58 @@ class MultipleVehiclesRestriction(BaseRestriction):
         """
         Valida se a rota pode ser atendida com o número máximo de veículos disponíveis.
         """
-        if not self.depot or not route:
+        # Lê parâmetros efetivos (permitindo overrides de outra restrição)
+        eff_capacity, eff_depot, eff_max_vehicles = self._get_effective_params(vehicle_data)
+
+        if not eff_depot or not route:
             return True  # Se não tiver depósito definido, aceita qualquer rota
         
         # Remove o depósito da rota para contar apenas os pacientes
-        patients = [city for city in route if city != self.depot]
+        patients = [city for city in route if city != eff_depot]
         
         if not patients:
             return True  # Se não há pacientes, a rota é válida
         
         # Calcula quantas ambulâncias seriam necessárias
         n_patients = len(patients)
-        n_vehicles_needed = min(
-            math.ceil(n_patients / self.vehicle_capacity),  # Capacidade configurável
-            self.max_vehicles
-        )
+        vehicles_needed = math.ceil(n_patients / eff_capacity) if eff_capacity > 0 else float('inf')
         
         # Verifica se o número de veículos necessários não excede o máximo disponível
-        return n_vehicles_needed <= self.max_vehicles
+        return vehicles_needed <= eff_max_vehicles
     
     def calculate_penalty(self, route: List[Tuple[float, float]], vehicle_data: Dict[str, Any] = None) -> float:
         """
         Calcula penalidade baseada no número de veículos necessários e eficiência das rotas.
         """
-        if not self.depot or not route:
+        eff_capacity, eff_depot, eff_max_vehicles = self._get_effective_params(vehicle_data)
+        if not eff_depot or not route:
             return 0.0
         
         # Remove o depósito da rota para contar apenas os pacientes
-        patients = [city for city in route if city != self.depot]
+        patients = [city for city in route if city != eff_depot]
         
         if not patients:
             return 0.0  # Se não há pacientes, não há penalidade
         
         # Distribui pacientes entre veículos
-        vehicle_routes = self._distribute_patients_to_vehicles(patients, self.depot)
+        vehicle_routes = self._distribute_patients_to_vehicles(patients, eff_depot, eff_capacity, eff_max_vehicles)
         
         # Calcula métricas
         total_time = self.get_total_time()
         vehicle_count = self.get_vehicle_count()
         avg_utilization = self.get_average_utilization()
         
+        # Penalidade por pacientes não atendidos (se exceder capacidade total disponível)
+        total_capacity_available = eff_capacity * eff_max_vehicles
+        unserved_patients = max(0, len(patients) - total_capacity_available)
+        
         # Penalidade baseada no número de veículos e eficiência
         vehicle_penalty = vehicle_count * 100  # Penalidade por usar mais veículos
         time_penalty = total_time * 0.1  # Penalidade por tempo total
         utilization_bonus = avg_utilization * 50  # Bônus por boa utilização
+        unserved_penalty = unserved_patients * 500  # Penalidade alta por paciente sem atendimento
         
-        penalty = vehicle_penalty + time_penalty - utilization_bonus
+        penalty = vehicle_penalty + time_penalty - utilization_bonus + unserved_penalty
         
         return max(0.0, penalty)  # Não permite penalidade negativa
     
@@ -261,23 +275,31 @@ class MultipleVehiclesRestriction(BaseRestriction):
                 'can_handle_route': True
             }
         
-        # Distribui pacientes entre veículos
-        vehicle_routes = self._distribute_patients_to_vehicles(patients, self.depot)
+        # Calcula veículos necessários e pacientes não atendidos
+        vehicles_needed = math.ceil(len(patients) / self.vehicle_capacity) if self.vehicle_capacity > 0 else float('inf')
+        total_capacity_available = self.vehicle_capacity * self.max_vehicles
+        unserved_patients = max(0, len(patients) - total_capacity_available)
+        
+        # Distribui pacientes entre veículos (limitado ao máximo disponível)
+        vehicle_routes = self._distribute_patients_to_vehicles(
+            patients, self.depot, self.vehicle_capacity, self.max_vehicles
+        )
         
         return {
             'depot': self.depot,
             'patients_count': len(patients),
-            'vehicles_needed': len(vehicle_routes),
+            'vehicles_needed': vehicles_needed,
             'max_vehicles': self.max_vehicles,
-            'can_handle_route': len(vehicle_routes) <= self.max_vehicles,
+            'can_handle_route': vehicles_needed <= self.max_vehicles,
             'total_time': self.get_total_time(),
             'average_time': self.get_average_time(),
             'average_utilization': self.get_average_utilization(),
             'vehicle_utilization': self.get_vehicle_utilization(),
-            'vehicle_capacity': self.vehicle_capacity
+            'vehicle_capacity': self.vehicle_capacity,
+            'unserved_patients': unserved_patients
         }
     
-    def get_vehicle_data_for_capacity_restriction(self) -> Dict[str, Any]:
+    def get_vehicle_data_for_capacity_restriction(self, route: List[Tuple[float, float]] = None) -> Dict[str, Any]:
         """
         Retorna dados do veículo para integração com VehicleCapacityRestriction.
         
@@ -286,9 +308,33 @@ class MultipleVehiclesRestriction(BaseRestriction):
                 - vehicle_capacity: Capacidade de pacientes por veículo
                 - depot: Coordenadas do depósito/hospital
                 - max_vehicles: Número máximo de veículos disponíveis
+                - vehicles_used: Número efetivo de veículos usados para a rota (se rota fornecida)
+                - unserved_patients: Pacientes não atendidos dado o limite (se rota fornecida)
         """
-        return RouteUtils.get_vehicle_data_template(
+        data = RouteUtils.get_vehicle_data_template(
             vehicle_capacity=self.vehicle_capacity,
             depot=self.depot,
             max_vehicles=self.max_vehicles
         )
+        
+        # Se uma rota for fornecida, calcula vehicles_used e unserved_patients
+        if route and self.depot:
+            # Remove o depósito da rota para contar apenas os pacientes
+            patients = [city for city in route if city != self.depot]
+            
+            if patients:
+                # Distribui respeitando limites atuais
+                self._distribute_patients_to_vehicles(
+                    patients,
+                    self.depot,
+                    self.vehicle_capacity,
+                    self.max_vehicles
+                )
+                data['vehicles_used'] = self.get_vehicle_count()
+                total_capacity = self.vehicle_capacity * self.max_vehicles
+                data['unserved_patients'] = max(0, len(patients) - total_capacity)
+            else:
+                data['vehicles_used'] = 0
+                data['unserved_patients'] = 0
+        
+        return data
