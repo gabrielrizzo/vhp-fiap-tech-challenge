@@ -583,12 +583,16 @@ with col4:
  
 st.divider()
  
+is_run_btn_disabled = st.session_state.generation == optimizer.GENERATION_LIMIT and st.session_state.generation > 0
+
 # Control buttons
-col1, col2, col3 = st.columns([1, 1, 2])
+col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
-    next_gen = st.button("▶️ Próxima Geração", use_container_width=True, type="primary")
+    next_gen = st.button("▶️ Próxima Geração", use_container_width=True, type="primary", disabled=is_run_btn_disabled)
 with col2:
-    run_all = st.button("⏩ Executar Todas", use_container_width=True)
+    run_all = st.button("⏩ Executar Todas", use_container_width=True, disabled=is_run_btn_disabled)
+with col3:
+    reset_simulation = st.button("🔄 Resetar Simulação", use_container_width=True)
  
 st.divider()
  
@@ -848,7 +852,25 @@ if run_all and st.session_state.generation < optimizer.GENERATION_LIMIT:
  
     progress_bar.empty()
     st.rerun()
- 
+
+if reset_simulation:
+    optimizer.generation_counter = itertools.count(start=1)
+    optimizer.mutation_intensity = optimizer.INITIAL_MUTATION_INTENSITY
+    optimizer.mutation_probability = optimizer.INITIAL_MUTATION_PROBABILITY
+    optimizer.best_fitness_values = []
+    optimizer.best_solutions = []
+    optimizer.last_best_fitness = None
+    optimizer.diversity_history = []
+    optimizer.generation_without_improvement = 0
+    optimizer.finished_exploration = False
+
+    # Resetar session state
+    st.session_state.generation = 0
+    st.session_state.population = optimizer.create_initial_population()
+
+    st.success("✅ Simulação resetada! População inicial criada.")
+    st.rerun()
+
 # Relatórios section
 if optimizer.best_solutions:
     st.divider()
