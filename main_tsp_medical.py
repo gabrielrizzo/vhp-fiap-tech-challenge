@@ -397,14 +397,15 @@ class MedicalRouteTSP:
             generation = next(self.generation_counter)
             
             # Prepara dados do veículo para integração das restrições
-            vehicle_data = None
+            vehicle_data_list = None
             if multiple_vehicles_config.get("enabled", False):
                 multiple_vehicles_restriction = self.ga.restriction_manager.get_restriction("multiple_vehicles_restriction")
                 if multiple_vehicles_restriction:
-                    vehicle_data = multiple_vehicles_restriction.get_vehicle_data_for_capacity_restriction()
-            
-            # Cria lista de vehicle_data para cada indivíduo
-            vehicle_data_list = [vehicle_data] * len(population) if vehicle_data else None
+                    # Calcula dados por indivíduo (vehicles_used/unserved dependem da rota)
+                    vehicle_data_list = [
+                        multiple_vehicles_restriction.get_vehicle_data_for_capacity_restriction(individual)
+                        for individual in population
+                    ]
             
             population, population_fitness = self.evaluate_population(population, vehicle_data_list)
             best_fitness = population_fitness[0]

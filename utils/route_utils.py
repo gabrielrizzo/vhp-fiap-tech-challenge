@@ -27,7 +27,7 @@ class RouteUtils:
         return [city for city in route if city != depot]
     
     @staticmethod
-    @lru_cache(maxsize=1000)  # Aumentado para melhor cobertura
+    @lru_cache(maxsize=10000)
     def calculate_distance(point1: Tuple[float, float], 
                           point2: Tuple[float, float]) -> float:
         """
@@ -63,7 +63,7 @@ class RouteUtils:
         return total_distance
     
     @staticmethod
-    @lru_cache(maxsize=500)
+    @lru_cache(maxsize=2000)
     def calculate_route_distance_cached(route_tuple: Tuple[Tuple[float, float], ...]) -> float:
         """
         Calcula distância total de uma rota com cache LRU (versão otimizada).
@@ -99,7 +99,13 @@ class RouteUtils:
         if len(route) < 2:
             return 0.0
         
-        total_distance = RouteUtils.calculate_route_distance(route)
+        # Usa distância cacheada por rota completa quando possível
+        try:
+            route_tuple = tuple(route)
+            total_distance = RouteUtils.calculate_route_distance_cached(route_tuple)
+        except TypeError:
+            # Fallback para lista não hashable ou dados inconsistentes
+            total_distance = RouteUtils.calculate_route_distance(route)
         time_hours = total_distance / speed_kmh
         return time_hours * 60  # Retorna em minutos
     
