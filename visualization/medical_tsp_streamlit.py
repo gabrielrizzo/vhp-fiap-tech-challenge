@@ -617,7 +617,9 @@ with col3:
 # Main layout
 st.subheader("🗺️ Visualização da Rota")
 map_placeholder = st.empty()
- 
+
+st.text("")
+st.divider()
 st.subheader("📈 Evolução do Fitness")
 fitness_placeholder = st.empty()
  
