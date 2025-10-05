@@ -639,8 +639,8 @@ def create_map_mapbox(best_solution, population, cities_locations, city_names=No
             hoverinfo='skip'
         ))
 
-        if len(population) > 20:
-            second_best = population[20]
+        if len(population) > 1:
+            second_best = population[1]
             second_lats = [lat for lat, lon in second_best] + [second_best[0][0]]
             second_lons = [lon for lat, lon in second_best] + [second_best[0][1]]
 
