@@ -29,6 +29,7 @@ from utils.helper_functions import (
 from data.benchmark_att48 import att_48_cities_locations, att_48_cities_order
 from data.benchmark_hospitals_sp import hospitals_sp_data
 from config.route_cost import route_costs_att_48
+from config.route_cost import route_costs_hospital_sp
  
 class MedicalRouteTSP:
     def __init__(self, dataset_type='att48', sidebar_config=None):
@@ -203,10 +204,13 @@ class MedicalRouteTSP:
             self.ga.restriction_manager.add_restriction(capacity_restriction)
             print("  + Capacity restriction added")
  
-        if route_cost_enabled and self.dataset_type == 'att48':
+        if route_cost_enabled:
+            is_att_48 = self.dataset_type == 'att48'
+            route_cost = route_costs_att_48 if is_att_48 else route_costs_hospital_sp
+            cities_locations = self.cities_locations
             route_cost_restriction = RouteCostRestriction(
-                cities_locations=att_48_cities_locations,
-                route_cost_dict=route_costs_att_48,
+                cities_locations=cities_locations,
+                route_cost_dict=route_cost,
             )
             route_cost_restriction.set_weight(route_cost_config.get("weight", 1.0))
             self.ga.restriction_manager.add_restriction(route_cost_restriction)
