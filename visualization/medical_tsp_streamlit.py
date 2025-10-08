@@ -244,12 +244,13 @@ class MedicalRouteTSP:
  
         return population
  
-    def evaluate_population(self, population):
+    def evaluate_population(self, population, vehicle_data_list=None):
         population_fitness = []
-        for individual in population:
-            fitness = self.ga.calculate_fitness_with_restrictions(individual)
+        for i, individual in enumerate(population):
+            vehicle_data = vehicle_data_list[i] if vehicle_data_list else None
+            fitness = self.ga.calculate_fitness_with_restrictions(individual, vehicle_data)
             population_fitness.append(fitness)
- 
+
         return self.ga.sort_population(population, population_fitness)
  
     def manage_diversity(self, population, current_diversity, generation):
@@ -660,13 +661,29 @@ if optimizer.best_fitness_values:
 if next_gen and st.session_state.generation < optimizer.GENERATION_LIMIT:
     generation = next(optimizer.generation_counter)
     st.session_state.generation = generation
- 
-    st.session_state.population, population_fitness = optimizer.evaluate_population(st.session_state.population)
+
+    # Prepara dados do veículo para integração das restrições (se múltiplos veículos estiver habilitado)
+    vehicle_data_list = None
+    multiple_vehicles_config = optimizer.config.get("restrictions.multiple_vehicles", {})
+    if multiple_vehicles_config.get("enabled", False):
+        multiple_vehicles_restriction = optimizer.ga.restriction_manager.get_restriction("multiple_vehicles_restriction")
+        if multiple_vehicles_restriction:
+            try:
+                # Calcula dados por indivíduo (vehicles_used/unserved dependem da rota)
+                vehicle_data_list = [
+                    multiple_vehicles_restriction.get_vehicle_data_for_capacity_restriction(individual)
+                    for individual in st.session_state.population
+                ]
+            except Exception as e:
+                print(f"Aviso: Erro ao calcular vehicle_data_list: {e}")
+                vehicle_data_list = None
+
+    st.session_state.population, population_fitness = optimizer.evaluate_population(st.session_state.population, vehicle_data_list)
     best_fitness = population_fitness[0]
     best_solution = st.session_state.population[0]
- 
+
     current_diversity = population_edge_diversity(st.session_state.population)
-    stats = optimizer.ga.get_population_statistics(st.session_state.population)
+    stats = optimizer.ga.get_population_statistics(st.session_state.population, vehicle_data_list)
  
     optimizer.track_progress(best_fitness, best_solution)
     optimizer.update_exploration_phase(generation)
@@ -691,13 +708,29 @@ if run_all and st.session_state.generation < optimizer.GENERATION_LIMIT:
     for i in range(optimizer.GENERATION_LIMIT - st.session_state.generation):
         generation = next(optimizer.generation_counter)
         st.session_state.generation = generation
- 
-        st.session_state.population, population_fitness = optimizer.evaluate_population(st.session_state.population)
+
+        # Prepara dados do veículo para integração das restrições (se múltiplos veículos estiver habilitado)
+        vehicle_data_list = None
+        multiple_vehicles_config = optimizer.config.get("restrictions.multiple_vehicles", {})
+        if multiple_vehicles_config.get("enabled", False):
+            multiple_vehicles_restriction = optimizer.ga.restriction_manager.get_restriction("multiple_vehicles_restriction")
+            if multiple_vehicles_restriction:
+                try:
+                    # Calcula dados por indivíduo (vehicles_used/unserved dependem da rota)
+                    vehicle_data_list = [
+                        multiple_vehicles_restriction.get_vehicle_data_for_capacity_restriction(individual)
+                        for individual in st.session_state.population
+                    ]
+                except Exception as e:
+                    print(f"Aviso: Erro ao calcular vehicle_data_list: {e}")
+                    vehicle_data_list = None
+
+        st.session_state.population, population_fitness = optimizer.evaluate_population(st.session_state.population, vehicle_data_list)
         best_fitness = population_fitness[0]
         best_solution = st.session_state.population[0]
- 
+
         current_diversity = population_edge_diversity(st.session_state.population)
-        stats = optimizer.ga.get_population_statistics(st.session_state.population)
+        stats = optimizer.ga.get_population_statistics(st.session_state.population, vehicle_data_list)
  
         optimizer.track_progress(best_fitness, best_solution)
         optimizer.update_exploration_phase(generation)
