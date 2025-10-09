@@ -29,7 +29,12 @@ from utils.helper_functions import (
 from data.benchmark_att48 import att_48_cities_locations, att_48_cities_order
 from data.benchmark_hospitals_sp import hospitals_sp_data
 from config.route_cost import route_costs_att_48
- 
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+open_ai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 class MedicalRouteTSP:
     def __init__(self, dataset_type='att48', sidebar_config=None):
         self.config = ConfigManager()
@@ -283,7 +288,7 @@ class MedicalRouteTSP:
     def setup_llm(self):
         llm_config = self.config.get("llm", {})
         if llm_config.get("enabled", True):
-            self.llm = LLMIntegration()
+            self.llm = LLMIntegration(open_ai_client)
             print(f"LLM Integration enabled (fallback mode: {llm_config.get('fallback_mode', True)})")
         else:
             self.llm = None
@@ -917,7 +922,11 @@ PRÓXIMOS PASSOS:
  
 OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhadas."""
  
-        st.code(report)
+        if optimizer.llm:
+            report = optimizer.llm.generate_route_report(routes_data, "daily")
+            st.code(report)
+        else:
+            st.code(report)
  
     # 3.3 Instruções da Rota
     with st.expander("📋 Instruções da Rota", expanded=False):

@@ -1,6 +1,7 @@
 import json
 from typing import List, Tuple, Dict, Any, Optional
 from datetime import datetime, timedelta
+from data.benchmark_hospitals_sp import hospitals_sp_data
 
 class LLMIntegration:
     def __init__(self, llm_client=None):
@@ -15,7 +16,6 @@ class LLMIntegration:
             "estimated_distance": route_info.get("distance", 0) if route_info else 0,
             "restrictions_summary": route_info.get("restrictions", {}) if route_info else {}
         }
-        
         if self.llm_client:
             prompt = self._create_instructions_prompt(route_data, route)
             response = self._call_llm(prompt)
@@ -53,7 +53,7 @@ class LLMIntegration:
         try:
             if hasattr(self.llm_client, 'chat'):
                 response = self.llm_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4.1",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=1500,
                     temperature=0.7
@@ -63,7 +63,7 @@ class LLMIntegration:
                 return "LLM client não configurado corretamente."
         except Exception as e:
             return f"Erro ao chamar LLM: {str(e)}"
-    
+
     def _create_instructions_prompt(self, route_data: Dict[str, Any], route: List[Tuple[float, float]]) -> str:
         return f"""
 Você é um assistente especializado em logística médica. Gere instruções detalhadas para entrega de medicamentos.
@@ -71,42 +71,69 @@ Você é um assistente especializado em logística médica. Gere instruções de
 DADOS DA ROTA:
 - Total de paradas: {route_data['total_cities']}
 - Distância estimada: {route_data['estimated_distance']:.2f} km
-- Restrições ativas: {list(route_data['restrictions_summary'].keys())}
+- Restrições ativas: {route_data['restrictions_summary']}
 
 COORDENADAS: {self._format_coordinates_for_prompt(route)}
 
-Gere instruções claras e objetivas para a equipe.
+Utilize os nomes dos hospitais como referência para as paradas ao invés de suas coordenadas. os nomes dos hospitais estão disponíveis na lista {self._format_hospitals_for_prompt(route)}. Caso seja Local Desconhecido, utilize SOMENTE as coordenadas na mensagem final.
+
+
+Gere instruções claras e objetivas para a equipe. Gerando um guia com o nome do local e as suas respectivas
+ordens de visita.
+
+Gere um resumo ao final com dados relevantes para a equipe e dicas para otimizar as visitas.
 """
-    
+
     def _create_report_prompt(self, stats: Dict[str, float], routes_data: List[Dict[str, Any]], period: str) -> str:
         return f"""
-Gere um relatório {period} de logística médica:
+Você é um assistente especializado em logística médica. Gere um relatório executivo {period} de logística médica focado em performance:
 
 ESTATÍSTICAS:
 - Rotas executadas: {stats['total_routes']}
 - Distância total: {stats['total_distance']:.2f} km
-- Eficiência média: {stats['avg_efficiency']:.1f}%
 
 Formate como relatório executivo profissional.
 """
-    
+
     def _create_question_prompt(self, question: str, context: Dict[str, Any]) -> str:
         context_info = ""
         if context:
             context_info = f"CONTEXTO: {context}"
-        
+
         return f"""
 {context_info}
 PERGUNTA: {question}
 Responda de forma técnica e prática sobre logística médica.
 """
-    
+
     def _format_coordinates_for_prompt(self, route: List[Tuple[float, float]]) -> str:
         formatted = []
         for i, (x, y) in enumerate(route, 1):
             formatted.append(f"Parada {i}: ({x:.1f}, {y:.1f})")
         return "\n".join(formatted)
-    
+
+    def _create_coordinate_to_name_mapping(self):
+        """Create a mapping from coordinates to hospital names"""
+
+        coord_to_name = {}
+        for hospital in hospitals_sp_data:
+            # Use (lat, lon) as key to match the route format
+            coord = (hospital['lat'], hospital['lon'])
+            coord_to_name[coord] = hospital['name']
+        return coord_to_name
+
+    def _format_hospitals_for_prompt(self, route: List[Tuple[float, float]]) -> str:
+        """Format coordinates with hospital names for the prompt"""
+        coord_to_name = self._create_coordinate_to_name_mapping()
+        formatted = []
+
+        for i, (lat, lon) in enumerate(route, 1):
+            coord = (lat, lon)
+            hospital_name = coord_to_name.get(coord, "")
+            formatted.append(f"Parada {i}: {hospital_name} - Coordenadas: ({lat:.4f}, {lon:.4f})")
+
+        return "\n".join(formatted)
+
     def _calculate_summary_statistics(self, routes_data: List[Dict[str, Any]]) -> Dict[str, float]:
         if not routes_data:
             return {
@@ -116,13 +143,13 @@ Responda de forma técnica e prática sobre logística médica.
                 'violation_rate': 0.0,
                 'avg_efficiency': 0.0
             }
-        
+
         total_routes = len(routes_data)
         total_distance = sum(route.get('distance', 0) for route in routes_data)
         total_time = sum(route.get('time', 0) for route in routes_data)
         violations = sum(1 for route in routes_data if route.get('violations', []))
         avg_efficiency = sum(route.get('efficiency', 0) for route in routes_data) / total_routes
-        
+
         return {
             'total_routes': total_routes,
             'total_distance': total_distance,
@@ -130,7 +157,7 @@ Responda de forma técnica e prática sobre logística médica.
             'violation_rate': (violations / total_routes) * 100 if total_routes > 0 else 0,
             'avg_efficiency': avg_efficiency
         }
-    
+
     def _generate_fallback_instructions(self, route_data: Dict[str, Any]) -> str:
         return f"""
 INSTRUÇÕES DE ENTREGA - ROTA OTIMIZADA
