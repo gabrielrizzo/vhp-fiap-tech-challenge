@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  medical-tsp:
+    build: .
+    container_name: medical-tsp-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./core:/app/core
+      - ./restrictions:/app/restrictions
+      - ./llm:/app/llm
+      - ./utils:/app/utils
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./tests:/app/tests
+      - ./docs:/app/docs
+      - ./visualization:/app/visualization
+      - ./logs:/app/logs
+      - ./outputs:/app/outputs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - PYTHONPATH=/app
+    working_dir: /app
+    command: streamlit run visualization/medical_tsp_streamlit.py --server.port=8501 --server.address=0.0.0.0
+    restart: unless-stopped
