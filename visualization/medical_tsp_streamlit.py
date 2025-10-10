@@ -650,20 +650,6 @@ def create_map_mapbox(best_solution, population, cities_locations, city_names=No
             hoverinfo='skip'
         ))
 
-        if len(population) > 1:
-            second_best = population[1]
-            second_lats = [lat for lat, lon in second_best] + [second_best[0][0]]
-            second_lons = [lon for lat, lon in second_best] + [second_best[0][1]]
-
-            fig.add_trace(go.Scattermap(
-                lat=second_lats,
-                lon=second_lons,
-                mode='lines',
-                line=dict(width=1.5, color='lightgray'),
-                name='2ª Melhor Rota',
-                hoverinfo='skip'
-            ))
-
     lats = [lat for lat, lon in cities_locations]
     lons = [lon for lat, lon in cities_locations]
 
@@ -710,19 +696,6 @@ def create_map_pixels(best_solution, population, cities_locations):
             marker=dict(size=8, color='red'),
             name='Melhor Rota',
         ))
-
-        if len(population) > 1:
-            second_best = population[1]
-            second_x = [x for x, y in second_best] + [second_best[0][0]]
-            second_y = [y for x, y in second_best] + [second_best[0][1]]
-
-            fig.add_trace(go.Scatter(
-                x=second_x,
-                y=second_y,
-                mode='lines',
-                line=dict(width=1.5, color='lightgray'),
-                name='2ª Melhor Rota',
-            ))
 
     cities_x = [x for x, y in cities_locations]
     cities_y = [y for x, y in cities_locations]
@@ -1001,7 +974,7 @@ if st.session_state.generation >= optimizer.GENERATION_LIMIT:
     with st.expander("📊 Estatísticas Finais", expanded=True):
         if optimizer.best_solutions:
             final_stats = optimizer.ga.get_population_statistics([optimizer.best_solutions[-1]])
-            st.markdown(f"Population Statistics: {final_stats}")
+            st.code(f"Population Statistics: {final_stats}")
  
             best_fitness = min(optimizer.best_fitness_values) if optimizer.best_fitness_values else 0
  
@@ -1014,7 +987,7 @@ Configuração utilizada:
 - Limite de gerações: {optimizer.GENERATION_LIMIT}
 - Restrições: {optimizer.ga.restriction_manager.get_active_restrictions()}"""
  
-            st.markdown(final_report)
+            st.code(final_report)
  
     # 3.5 Configuração Detalhada
     with st.expander("⚙️ Configuração Detalhada", expanded=False):
@@ -1050,4 +1023,4 @@ Restrições ativas: {optimizer.ga.restriction_manager.get_active_restrictions()
  
         config_info += "\n" + "=" * 50
  
-        st.markdown(config_info)
+        st.code(config_info)
