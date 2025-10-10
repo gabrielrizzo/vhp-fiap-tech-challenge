@@ -937,6 +937,7 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
             st.markdown(report)
         else:
             st.markdown(report)
+        st.download_button("Baixar report", data=report, file_name="relatorio-performance.md")
  
     # 3.3 Instruções da Rota
     with st.expander("📋 Instruções da Rota", expanded=False):
@@ -953,6 +954,7 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
             try:
                 instructions = optimizer.llm.generate_delivery_instructions(best_solution, route_info)
                 st.markdown(instructions)
+                st.download_button("Baixar report", data=instructions, file_name="relatorio-instrucoes.md")
             except:
                 st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
 Distância: {best_fitness:.2f}
