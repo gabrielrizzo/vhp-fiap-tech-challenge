@@ -961,9 +961,9 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
  
         if optimizer.llm:
             report = optimizer.llm.generate_route_report(routes_data, "daily")
-            st.code(report)
+            st.markdown(report)
         else:
-            st.code(report)
+            st.markdown(report)
  
     # 3.3 Instruções da Rota
     with st.expander("📋 Instruções da Rota", expanded=False):
@@ -979,15 +979,15 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
         if optimizer.llm:
             try:
                 instructions = optimizer.llm.generate_delivery_instructions(best_solution, route_info)
-                st.code(instructions)
+                st.markdown(instructions)
             except:
-                st.code(f"""=== INSTRUÇÕES DA ROTA ===
+                st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
 Distância: {best_fitness:.2f}
 Locais: {len(best_solution)}
 Rota válida: {route_info['is_valid']}
 Restrições ativas: {route_info['restrictions']}""")
         else:
-            st.code(f"""=== INSTRUÇÕES DA ROTA ===
+            st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
 Distância: {best_fitness:.2f}
 Locais: {len(best_solution)}
 Rota válida: {route_info['is_valid']}
@@ -1001,7 +1001,7 @@ if st.session_state.generation >= optimizer.GENERATION_LIMIT:
     with st.expander("📊 Estatísticas Finais", expanded=True):
         if optimizer.best_solutions:
             final_stats = optimizer.ga.get_population_statistics([optimizer.best_solutions[-1]])
-            st.code(f"Population Statistics: {final_stats}")
+            st.markdown(f"Population Statistics: {final_stats}")
  
             best_fitness = min(optimizer.best_fitness_values) if optimizer.best_fitness_values else 0
  
@@ -1014,7 +1014,7 @@ Configuração utilizada:
 - Limite de gerações: {optimizer.GENERATION_LIMIT}
 - Restrições: {optimizer.ga.restriction_manager.get_active_restrictions()}"""
  
-            st.code(final_report)
+            st.markdown(final_report)
  
     # 3.5 Configuração Detalhada
     with st.expander("⚙️ Configuração Detalhada", expanded=False):
@@ -1050,4 +1050,4 @@ Restrições ativas: {optimizer.ga.restriction_manager.get_active_restrictions()
  
         config_info += "\n" + "=" * 50
  
-        st.code(config_info)
+        st.markdown(config_info)
