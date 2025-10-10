@@ -312,8 +312,9 @@ class MedicalRouteTSP:
     def evaluate_population(self, population, vehicle_data_list=None):
         population_fitness = []
         for i, individual in enumerate(population):
+            use_geographic = dataset_choice == 'hospitals_sp'
             vehicle_data = vehicle_data_list[i] if vehicle_data_list else None
-            fitness = self.ga.calculate_fitness_with_restrictions(individual, vehicle_data)
+            fitness = self.ga.calculate_fitness_with_restrictions(individual, vehicle_data, use_geographic)
             population_fitness.append(fitness)
 
         return self.ga.sort_population(population, population_fitness)
@@ -905,7 +906,8 @@ if optimizer.best_solutions:
     with st.expander("📈 Relatório de Performance", expanded=False):
         routes_data = []
         for i, solution in enumerate(optimizer.best_solutions[-10:], 1):
-            fitness = optimizer.ga.calculate_fitness_with_restrictions(solution)
+            use_geographic = dataset_choice == 'hospitals_sp'
+            fitness = optimizer.ga.calculate_fitness_with_restrictions(solution, use_geographic=use_geographic)
             routes_data.append({
                 'route_id': i,
                 'distance': fitness,
@@ -954,7 +956,7 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
             try:
                 instructions = optimizer.llm.generate_delivery_instructions(best_solution, route_info)
                 st.markdown(instructions)
-                st.download_button("Baixar report", data=instructions, file_name="relatorio-instrucoes.md")
+                st.download_button("Baixar report", data=instructions, file_name="relatorio-performance.md")
             except:
                 st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
 Distância: {best_fitness:.2f}
