@@ -650,20 +650,6 @@ def create_map_mapbox(best_solution, population, cities_locations, city_names=No
             hoverinfo='skip'
         ))
 
-        if len(population) > 1:
-            second_best = population[1]
-            second_lats = [lat for lat, lon in second_best] + [second_best[0][0]]
-            second_lons = [lon for lat, lon in second_best] + [second_best[0][1]]
-
-            fig.add_trace(go.Scattermap(
-                lat=second_lats,
-                lon=second_lons,
-                mode='lines',
-                line=dict(width=1.5, color='lightgray'),
-                name='2ª Melhor Rota',
-                hoverinfo='skip'
-            ))
-
     lats = [lat for lat, lon in cities_locations]
     lons = [lon for lat, lon in cities_locations]
 
@@ -710,19 +696,6 @@ def create_map_pixels(best_solution, population, cities_locations):
             marker=dict(size=8, color='red'),
             name='Melhor Rota',
         ))
-
-        if len(population) > 1:
-            second_best = population[1]
-            second_x = [x for x, y in second_best] + [second_best[0][0]]
-            second_y = [y for x, y in second_best] + [second_best[0][1]]
-
-            fig.add_trace(go.Scatter(
-                x=second_x,
-                y=second_y,
-                mode='lines',
-                line=dict(width=1.5, color='lightgray'),
-                name='2ª Melhor Rota',
-            ))
 
     cities_x = [x for x, y in cities_locations]
     cities_y = [y for x, y in cities_locations]
@@ -961,9 +934,10 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
  
         if optimizer.llm:
             report = optimizer.llm.generate_route_report(routes_data, "daily")
-            st.code(report)
+            st.markdown(report)
         else:
-            st.code(report)
+            st.markdown(report)
+        st.download_button("Baixar report", data=report, file_name="relatorio-performance.md")
  
     # 3.3 Instruções da Rota
     with st.expander("📋 Instruções da Rota", expanded=False):
@@ -979,15 +953,16 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
         if optimizer.llm:
             try:
                 instructions = optimizer.llm.generate_delivery_instructions(best_solution, route_info)
-                st.code(instructions)
+                st.markdown(instructions)
+                st.download_button("Baixar report", data=instructions, file_name="relatorio-instrucoes.md")
             except:
-                st.code(f"""=== INSTRUÇÕES DA ROTA ===
+                st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
 Distância: {best_fitness:.2f}
 Locais: {len(best_solution)}
 Rota válida: {route_info['is_valid']}
 Restrições ativas: {route_info['restrictions']}""")
         else:
-            st.code(f"""=== INSTRUÇÕES DA ROTA ===
+            st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
 Distância: {best_fitness:.2f}
 Locais: {len(best_solution)}
 Rota válida: {route_info['is_valid']}
