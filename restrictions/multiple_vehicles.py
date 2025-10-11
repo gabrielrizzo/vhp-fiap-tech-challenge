@@ -76,23 +76,41 @@ class MultipleVehiclesRestriction(BaseRestriction):
         Cria uma rota simples por vizinho mais próximo: depot -> pacientes -> depot.
         """
         if not patients:
-            return [depot]
+            return [depot] if depot else []
             
-        # Começa no depósito ou hospital base
-        route = [depot]
-        remaining_patients = patients.copy()
-        
-        # Usa algoritmo do vizinho mais próximo para otimizar a rota
-        while remaining_patients:
-            current_location = route[-1]
-            nearest_patient = min(remaining_patients, 
-                                key=lambda p: self._calculate_distance(current_location, p))
+        # Se não há depot, começa com o primeiro paciente
+        if depot:
+            route = [depot]
+            remaining_patients = patients.copy()
             
-            route.append(nearest_patient)
-            remaining_patients.remove(nearest_patient)
-        
-        # Retorna ao depósito ou hospital base
-        route.append(depot)
+            # Usa algoritmo do vizinho mais próximo para otimizar a rota
+            while remaining_patients:
+                current_location = route[-1]
+                nearest_patient = min(remaining_patients, 
+                                    key=lambda p: self._calculate_distance(current_location, p))
+                
+                route.append(nearest_patient)
+                remaining_patients.remove(nearest_patient)
+            
+            # Retorna ao depósito
+            route.append(depot)
+        else:
+            # Sem depot, cria rota circular começando pelo primeiro paciente
+            route = [patients[0]]
+            remaining_patients = patients[1:]
+            
+            # Usa algoritmo do vizinho mais próximo para otimizar a rota
+            while remaining_patients:
+                current_location = route[-1]
+                nearest_patient = min(remaining_patients, 
+                                    key=lambda p: self._calculate_distance(current_location, p))
+                
+                route.append(nearest_patient)
+                remaining_patients.remove(nearest_patient)
+            
+            # Retorna ao ponto inicial para fechar o ciclo
+            route.append(patients[0])
+            
         return route
     
     def _calculate_route_time(self, route: List[Tuple[float, float]], speed_kmh: float = 50.0) -> float:
@@ -318,9 +336,13 @@ class MultipleVehiclesRestriction(BaseRestriction):
         )
         
         # Se uma rota for fornecida, calcula vehicles_used e unserved_patients
-        if route and self.depot:
-            # Remove o depósito da rota para contar apenas os pacientes
-            patients = [city for city in route if city != self.depot]
+        if route:
+            # Se há depot definido, remove da rota para contar apenas os pacientes
+            if self.depot:
+                patients = [city for city in route if city != self.depot]
+            else:
+                # Se não há depot, considera toda a rota como pacientes
+                patients = route
             
             if patients:
                 # Distribui respeitando limites atuais
