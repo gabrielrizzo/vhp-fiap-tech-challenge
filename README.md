@@ -4,11 +4,11 @@ Sistema avançado de otimização de rotas médicas usando Algoritmos Genéticos
 
 ## 👥 Equipe - FIAP Tech Challenge
 
-- **Bruno**: RM
-- **Gerson**: RM
-- **Gabriel**: RM
-- **Amorin**: RM
-- **Mauricio**: RM
+- **Bruno Amorim**: RM365279
+- **Gabriel Rizzo**: RM366033
+- **Mauricio Magnani**: RM365929
+- **Vinicius Martins**: RM365278
+- **Gerson Luiz**: RM366284
   
 ## 📋 Índice
 
@@ -158,6 +158,31 @@ Acesse: http://localhost:8501
 - Visualize evolução em tempo real
 - Execute geração por geração ou todas de uma vez
 - Gere relatórios automatizados
+
+## 🐳 Executar com Docker
+
+### Setup Rápido
+```bash
+# Clone o repositório
+git clone https://github.com/gabrielrizzo/vhp-fiap-tech-challenge.git
+cd vhp-fiap-tech-challenge
+
+# (Opcional) Configure API key da OpenAI
+echo "OPENAI_API_KEY=sua-chave-aqui" > .env
+
+# Build e execute
+docker-compose build
+docker-compose up
+```
+
+**Acesse:** http://localhost:8501
+
+### Comandos Úteis
+```bash
+docker-compose logs -f          # Ver logs
+docker-compose down             # Parar
+docker-compose exec medical-tsp bash  # Acessar container
+```
 
 ## 🔧 Restrições Implementadas
 
