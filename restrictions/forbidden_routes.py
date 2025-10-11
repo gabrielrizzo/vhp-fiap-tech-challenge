@@ -130,14 +130,23 @@ class ForbiddenRoutes(BaseRestriction):
 
         penalty = 0.0
         n = len(route)
+        forbidden_count = 0
+
         for i in range(n):
             city1 = route[i]
             city2 = route[(i + 1) % n]  # Conecta de volta à primeira cidade
 
             if self.is_route_forbidden(city1, city2):
-                # Aplica uma penalidade proporcional à distância da rota
+                forbidden_count += 1
                 route_distance = calculate_distance(city1, city2)
-                penalty += self._base_distance_penalty * route_distance
+
+                # Penalidade proporcional à distância
+                distance_penalty = route_distance * 0.5  # Fator de proporcionalidade
+
+                # Penalidade crescente por número de violações
+                severity_multiplier = 1.0 + (forbidden_count * 0.2)
+
+                penalty += distance_penalty * severity_multiplier
 
         return penalty
 
