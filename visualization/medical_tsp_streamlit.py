@@ -34,7 +34,6 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-open_ai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
  
 class MedicalRouteTSP:
     def __init__(self, dataset_type='att48', sidebar_config=None):
@@ -291,7 +290,8 @@ class MedicalRouteTSP:
  
     def setup_llm(self):
         llm_config = self.config.get("llm", {})
-        if llm_config.get("enabled", True):
+        if llm_config.get("enabled", True) and os.getenv("OPENAI_API_KEY"):
+            open_ai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             self.llm = LLMIntegration(open_ai_client)
             print(f"LLM Integration enabled (fallback mode: {llm_config.get('fallback_mode', True)})")
         else:
