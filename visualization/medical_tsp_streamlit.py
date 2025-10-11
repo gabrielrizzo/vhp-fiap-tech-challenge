@@ -634,35 +634,228 @@ st.subheader("📈 Evolução do Fitness")
 fitness_placeholder = st.empty()
  
 @st.cache_data(ttl=60)
-def create_map_mapbox(best_solution, population, cities_locations, city_names=None):
+def create_map_mapbox(best_solution, population, cities_locations, city_names=None, forbidden_routes=None, one_way_routes=None, fixed_start_disabled=False, vehicle_routes=None):
     """Cria mapa com Mapbox (para hospitais SP)"""
     fig = go.Figure()
 
-    if best_solution:
-        route_lats = [lat for lat, lon in best_solution] + [best_solution[0][0]]
-        route_lons = [lon for lat, lon in best_solution] + [best_solution[0][1]]
+    # Desenha rotas proibidas se existirem
+    if forbidden_routes:
+        for route in forbidden_routes:
+            city1, city2 = route
+            # Encontrar nomes dos pontos ou usar coordenadas
+            if city_names:
+                try:
+                    idx1 = [c for c in cities_locations].index(city1)
+                    idx2 = [c for c in cities_locations].index(city2)
+                    city1_name = city_names[idx1]
+                    city2_name = city_names[idx2]
+                except (ValueError, IndexError):
+                    city1_name = f"({city1[0]:.4f}, {city1[1]:.4f})"
+                    city2_name = f"({city2[0]:.4f}, {city2[1]:.4f})"
+            else:
+                city1_name = f"({city1[0]:.4f}, {city1[1]:.4f})"
+                city2_name = f"({city2[0]:.4f}, {city2[1]:.4f})"
+                
+            route_name = f"Rota Proibida [{city1_name} → {city2_name}]"
+            hover_text = f"Proibido: {city1_name} → {city2_name}"
+            
+            fig.add_trace(go.Scattermap(
+                lat=[city1[0], city2[0]],
+                lon=[city1[1], city2[1]],
+                mode='lines',
+                line=dict(width=3, color='red'),
+                name=route_name,
+                hoverinfo='text',
+                hovertext=hover_text
+            ))
+    
+    # Desenha rotas unidirecionais se existirem
+    if one_way_routes:
+        for route in one_way_routes:
+            origin, destination = route
+            # Calcula ponto médio para posicionar a seta
+            mid_lat = (origin[0] + destination[0]) / 2
+            mid_lon = (origin[1] + destination[1]) / 2
+            
+            # Calcula a direção da seta (vetor normalizado)
+            dx = destination[0] - origin[0]
+            dy = destination[1] - origin[1]
+            dist = ((dx**2) + (dy**2))**0.5
+            if dist > 0:
+                dx, dy = dx/dist, dy/dist
+            
+            # Adiciona a linha da rota
+            # Encontrar nomes dos pontos ou usar coordenadas
+            if city_names:
+                try:
+                    idx1 = [c for c in cities_locations].index(origin)
+                    idx2 = [c for c in cities_locations].index(destination)
+                    origin_name = city_names[idx1]
+                    dest_name = city_names[idx2]
+                except (ValueError, IndexError):
+                    origin_name = f"({origin[0]:.4f}, {origin[1]:.4f})"
+                    dest_name = f"({destination[0]:.4f}, {destination[1]:.4f})"
+            else:
+                origin_name = f"({origin[0]:.4f}, {origin[1]:.4f})"
+                dest_name = f"({destination[0]:.4f}, {destination[1]:.4f})"
+                
+            route_name = f"Mão Única [{origin_name} → {dest_name}]"
+            hover_text = f"Sentido permitido: {origin_name} → {dest_name}"
+            
+            fig.add_trace(go.Scattermap(
+                lat=[origin[0], destination[0]],
+                lon=[origin[1], destination[1]],
+                mode='lines',
+                line=dict(width=2, color='green'),
+                name=route_name,
+                hoverinfo='text',
+                hovertext=hover_text
+            ))
+            
+            # Adiciona uma seta no meio da linha
+            # Para Mapbox, usamos uma abordagem diferente com um marcador de seta
+            # Cria um ponto um pouco adiante na linha para direcionar a seta
+            arrow_lat = mid_lat + (dx * 0.001)  # Pequeno deslocamento na direção da linha
+            arrow_lon = mid_lon + (dy * 0.001)
+            
+            fig.add_trace(go.Scattermap(
+                lat=[mid_lat, arrow_lat],
+                lon=[mid_lon, arrow_lon],
+                mode='lines',
+                line=dict(width=3, color='green'),
+                marker=dict(size=10, symbol='arrow', angle=90 if dy > 0 else 270),
+                name='Direção',
+                hoverinfo='skip',
+                showlegend=False
+            ))
 
-        fig.add_trace(go.Scattermap(
-            lat=route_lats,
-            lon=route_lons,
-            mode='lines',
-            line=dict(width=3, color='blue'),
-            name='Melhor Rota',
-            hoverinfo='skip'
-        ))
+    if best_solution:
+        # Cores para diferentes veículos
+        vehicle_colors = ['blue', 'red', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'brown', 'pink']
+        
+        # Se temos rotas de veículos, desenhamos cada uma separadamente
+        if vehicle_routes and len(vehicle_routes) > 0:
+            for vehicle_id, route in vehicle_routes.items():
+                # Seleciona uma cor para este veículo
+                color_idx = vehicle_id % len(vehicle_colors)
+                vehicle_color = vehicle_colors[color_idx]
+                
+                # Extrai coordenadas lat e lon para esta rota
+                route_lats = [lat for lat, lon in route]
+                route_lons = [lon for lat, lon in route]
+                
+                # Cria textos para hover com as coordenadas e informação do veículo
+                route_hover_texts = []
+                for i, point in enumerate(route):
+                    point_lat, point_lon = point
+                    
+                    # Tenta encontrar o nome do hospital/local
+                    point_name = "Local desconhecido"
+                    if city_names:
+                        try:
+                            idx = [c for c in cities_locations].index(point)
+                            point_name = city_names[idx]
+                        except (ValueError, IndexError):
+                            point_name = f"({point_lat:.4f}, {point_lon:.4f})"
+                    
+                    if i == 0 or i == len(route) - 1:  # Primeiro ou último ponto (depósito)
+                        route_hover_texts.append(f"Depósito/Hospital: {point_name} - Veículo {vehicle_id+1}")
+                    else:
+                        route_hover_texts.append(f"{point_name} - Veículo {vehicle_id+1}")
+                
+                # Adiciona a rota deste veículo ao gráfico
+                fig.add_trace(go.Scattermap(
+                    lat=route_lats,
+                    lon=route_lons,
+                    mode='lines+markers',
+                    line=dict(width=3, color=vehicle_color),
+                    marker=dict(size=8, color=vehicle_color),
+                    name=f'Veículo {vehicle_id+1}',
+                    hoverinfo='text',
+                    hovertext=route_hover_texts
+                ))
+        else:
+            # Caso não tenhamos informações de veículos, mostramos a rota completa como antes
+            route_lats = [lat for lat, lon in best_solution] + [best_solution[0][0]]
+            route_lons = [lon for lat, lon in best_solution] + [best_solution[0][1]]
+            
+            # Cria textos para hover com informações dos locais
+            route_hover_texts = []
+            for i, point in enumerate(best_solution):
+                point_lat, point_lon = point
+                
+                # Tenta encontrar o nome do hospital/local
+                if city_names:
+                    try:
+                        idx = [c for c in cities_locations].index(point)
+                        point_name = city_names[idx]
+                        route_hover_texts.append(f"{point_name}: ({point_lat:.4f}, {point_lon:.4f})")
+                    except (ValueError, IndexError):
+                        route_hover_texts.append(f"Local {i+1}: ({point_lat:.4f}, {point_lon:.4f})")
+                else:
+                    route_hover_texts.append(f"Local {i+1}: ({point_lat:.4f}, {point_lon:.4f})")
+                    
+            # Adiciona o primeiro ponto novamente para fechar o ciclo
+            if route_hover_texts:
+                route_hover_texts.append(route_hover_texts[0])
+
+            fig.add_trace(go.Scattermap(
+                lat=route_lats,
+                lon=route_lons,
+                mode='lines+markers',
+                line=dict(width=3, color='blue'),
+                marker=dict(size=8, color='blue'),
+                name='Melhor Rota',
+                hoverinfo='text',
+                hovertext=route_hover_texts
+            ))
 
     lats = [lat for lat, lon in cities_locations]
     lons = [lon for lat, lon in cities_locations]
-
+    
+    # Adiciona todos os pontos com cor vermelha
     fig.add_trace(go.Scattermap(
         lat=lats,
         lon=lons,
         mode='markers',
-        marker=dict(size=10, color='red'),
+        marker=dict(size=12, color='red'),
         text=city_names if city_names else [f"Local {i+1}" for i in range(len(cities_locations))],
         hoverinfo='text',
         name='Hospitais'
     ))
+    
+    # Destaca o ponto inicial com um marcador roxo maior
+    # Se tiver uma rota e início fixo desativado, usa o primeiro ponto da rota
+    # Caso contrário, usa o primeiro ponto da lista de cidades
+    if best_solution and fixed_start_disabled:
+        initial_point = best_solution[0]
+        fig.add_trace(go.Scattermap(
+            lat=[initial_point[0]],
+            lon=[initial_point[1]],
+            mode='markers',
+            marker=dict(
+                size=18, 
+                color='purple',
+                opacity=0.5
+            ),
+            name='Ponto Inicial',
+            hoverinfo='text',
+            hovertext='Ponto Inicial (Rota)'
+        ))
+    elif len(cities_locations) > 0:
+        fig.add_trace(go.Scattermap(
+            lat=[cities_locations[0][0]],
+            lon=[cities_locations[0][1]],
+            mode='markers',
+            marker=dict(
+                size=18, 
+                color='purple',
+                opacity=0.5
+            ),
+            name='Ponto Inicial',
+            hoverinfo='text',
+            hovertext='Ponto Inicial (Hospital)'
+        ))
 
     fig.update_layout(
         map=dict(
@@ -681,33 +874,233 @@ def create_map_mapbox(best_solution, population, cities_locations, city_names=No
     return fig
  
 @st.cache_data(ttl=60)
-def create_map_pixels(best_solution, population, cities_locations):
+def create_map_pixels(best_solution, population, cities_locations, forbidden_routes=None, one_way_routes=None, fixed_start_disabled=False, vehicle_routes=None):
     """Cria mapa com coordenadas em pixels (para ATT48)"""
     fig = go.Figure()
+    
+    # Desenha rotas proibidas se existirem
+    if forbidden_routes:
+        for route in forbidden_routes:
+            city1, city2 = route
+            # Para o mapa de pixels, usamos índices como nomes
+            try:
+                city1_idx = cities_locations.index(city1)
+                city2_idx = cities_locations.index(city2)
+                city1_name = f"Cidade {city1_idx + 1}"
+                city2_name = f"Cidade {city2_idx + 1}"
+            except ValueError:
+                city1_name = f"({city1[0]}, {city1[1]})"
+                city2_name = f"({city2[0]}, {city2[1]})"
+                
+            route_name = f"Rota Proibida [{city1_name} → {city2_name}]"
+            hover_text = f"Proibido: {city1_name} → {city2_name}"
+            
+            fig.add_trace(go.Scatter(
+                x=[city1[0], city2[0]],
+                y=[city1[1], city2[1]],
+                mode='lines',
+                line=dict(width=3, color='red'),
+                name=route_name,
+                hoverinfo='text',
+                hovertext=hover_text
+            ))
+    
+    # Desenha rotas unidirecionais se existirem
+    if one_way_routes:
+        for route in one_way_routes:
+            origin, destination = route
+            # Calcula ponto médio para posicionar a seta
+            mid_x = (origin[0] + destination[0]) / 2
+            mid_y = (origin[1] + destination[1]) / 2
+            
+            # Calcula a direção da seta (vetor normalizado)
+            dx = destination[0] - origin[0]
+            dy = destination[1] - origin[1]
+            dist = ((dx**2) + (dy**2))**0.5
+            if dist > 0:
+                dx, dy = dx/dist, dy/dist
+            
+            # Adiciona a linha da rota
+            # Para o mapa de pixels, usamos índices como nomes
+            try:
+                origin_idx = cities_locations.index(origin)
+                dest_idx = cities_locations.index(destination)
+                origin_name = f"Cidade {origin_idx + 1}"
+                dest_name = f"Cidade {dest_idx + 1}"
+            except ValueError:
+                origin_name = f"({origin[0]}, {origin[1]})"
+                dest_name = f"({destination[0]}, {destination[1]})"
+                
+            route_name = f"Mão Única [{origin_name} → {dest_name}]"
+            hover_text = f"Sentido permitido: {origin_name} → {dest_name}"
+            
+            fig.add_trace(go.Scatter(
+                x=[origin[0], destination[0]],
+                y=[origin[1], destination[1]],
+                mode='lines',
+                line=dict(width=2, color='green'),
+                name=route_name,
+                hoverinfo='text',
+                hovertext=hover_text
+            ))
+            
+            # Adiciona uma seta no meio da linha
+            arrow_angle = np.degrees(np.arctan2(dy, dx))
+            fig.add_annotation(
+                x=mid_x,
+                y=mid_y,
+                ax=mid_x + (dx * 20),  # Aponta na direção do fluxo
+                ay=mid_y + (dy * 20),
+                xref="x",
+                yref="y",
+                axref="x",
+                ayref="y",
+                showarrow=True,
+                arrowhead=3,
+                arrowsize=1.5,
+                arrowwidth=2,
+                arrowcolor='green',
+                standoff=0
+            )
 
     if best_solution:
-        route_x = [x for x, y in best_solution] + [best_solution[0][0]]
-        route_y = [y for x, y in best_solution] + [best_solution[0][1]]
+        # Cores para diferentes veículos
+        vehicle_colors = ['blue', 'red', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'brown', 'pink']
+        
+        # Se temos rotas de veículos, desenhamos cada uma separadamente
+        if vehicle_routes and len(vehicle_routes) > 0:
+            for vehicle_id, route in vehicle_routes.items():
+                # Seleciona uma cor para este veículo
+                color_idx = vehicle_id % len(vehicle_colors)
+                vehicle_color = vehicle_colors[color_idx]
+                
+                # Extrai coordenadas x e y para esta rota
+                route_x = [x for x, y in route]
+                route_y = [y for x, y in route]
+                
+                # Cria textos para hover com as coordenadas e informação do veículo
+                route_hover_texts = []
+                for i, point in enumerate(route):
+                    try:
+                        city_idx = cities_locations.index(point)
+                        if i == 0 or i == len(route) - 1:  # Primeiro ou último ponto (depósito)
+                            route_hover_texts.append(f"Depósito/Hospital: ({point[0]}, {point[1]}) - Veículo {vehicle_id+1}")
+                        else:
+                            route_hover_texts.append(f"Cidade {city_idx+1}: ({point[0]}, {point[1]}) - Veículo {vehicle_id+1}")
+                    except ValueError:
+                        if i == 0 or i == len(route) - 1:  # Primeiro ou último ponto (depósito)
+                            route_hover_texts.append(f"Depósito/Hospital: ({point[0]}, {point[1]}) - Veículo {vehicle_id+1}")
+                        else:
+                            route_hover_texts.append(f"Ponto {i}: ({point[0]}, {point[1]}) - Veículo {vehicle_id+1}")
+                
+                # Adiciona a rota deste veículo ao gráfico
+                fig.add_trace(go.Scatter(
+                    x=route_x,
+                    y=route_y,
+                    mode='lines+markers',
+                    line=dict(width=3, color=vehicle_color),
+                    marker=dict(size=8, color=vehicle_color),
+                    name=f'Veículo {vehicle_id+1}',
+                    hoverinfo='text',
+                    hovertext=route_hover_texts
+                ))
+        else:
+            # Caso não tenhamos informações de veículos, mostramos a rota completa como antes
+            route_x = [x for x, y in best_solution] + [best_solution[0][0]]
+            route_y = [y for x, y in best_solution] + [best_solution[0][1]]
+            
+            # Cria textos para hover com as coordenadas para a rota
+            route_hover_texts = []
+            for i, point in enumerate(best_solution):
+                try:
+                    city_idx = cities_locations.index(point)
+                    route_hover_texts.append(f"Cidade {city_idx+1}: ({point[0]}, {point[1]})")
+                except ValueError:
+                    route_hover_texts.append(f"Ponto {i+1}: ({point[0]}, {point[1]})")
+            # Adiciona o primeiro ponto novamente para fechar o ciclo
+            if route_hover_texts:
+                route_hover_texts.append(route_hover_texts[0])
 
-        fig.add_trace(go.Scatter(
-            x=route_x,
-            y=route_y,
-            mode='lines+markers',
-            line=dict(width=3, color='blue'),
-            marker=dict(size=8, color='red'),
-            name='Melhor Rota',
-        ))
+            fig.add_trace(go.Scatter(
+                x=route_x,
+                y=route_y,
+                mode='lines+markers',
+                line=dict(width=3, color='blue'),
+                marker=dict(size=8, color='red'),
+                name='Melhor Rota',
+                hoverinfo='text',
+                hovertext=route_hover_texts
+            ))
 
     cities_x = [x for x, y in cities_locations]
     cities_y = [y for x, y in cities_locations]
-
+    
+    # Adiciona todos os pontos com cor vermelha e texto com o índice
+    # Cria rótulos para cada cidade com seu índice
+    city_labels = [f"Cidade {i+1}" for i in range(len(cities_locations))]
+    
+    # Cria textos para hover com as coordenadas
+    hover_texts = [f"Cidade {i+1}: ({x}, {y})" for i, (x, y) in enumerate(cities_locations)]
+    
+    # Adiciona os pontos com seus rótulos
     fig.add_trace(go.Scatter(
         x=cities_x,
         y=cities_y,
-        mode='markers',
-        marker=dict(size=10, color='red'),
-        name='Cidades'
+        mode='markers+text',
+        marker=dict(size=12, color='red'),
+        text=city_labels,
+        textposition="top center",
+        textfont=dict(size=8, color='black'),  # Fonte menor e cor preta para melhor visibilidade
+        name='Cidades',
+        hoverinfo='text',
+        hovertext=hover_texts
     ))
+    
+    # Destaca o ponto inicial com um marcador roxo maior
+    # Se tiver uma rota e início fixo desativado, usa o primeiro ponto da rota
+    # Caso contrário, usa o primeiro ponto da lista de cidades
+    if best_solution and fixed_start_disabled:
+        initial_point = best_solution[0]
+        # Cria texto para hover com as coordenadas do ponto inicial
+        try:
+            city_idx = cities_locations.index(initial_point)
+            hover_text = f"Ponto Inicial (Rota) - Cidade {city_idx+1}: ({initial_point[0]}, {initial_point[1]})"
+        except ValueError:
+            hover_text = f"Ponto Inicial (Rota): ({initial_point[0]}, {initial_point[1]})"
+            
+        fig.add_trace(go.Scatter(
+            x=[initial_point[0]],
+            y=[initial_point[1]],
+            mode='markers',
+            marker=dict(
+                size=18, 
+                color='purple',
+                opacity=0.5,
+                line=dict(width=2, color='white')
+            ),
+            name='Ponto Inicial',
+            hoverinfo='text',
+            hovertext=hover_text
+        ))
+    elif len(cities_locations) > 0:
+        # Para o mapa de pixels, podemos usar a propriedade line
+        initial_point = cities_locations[0]
+        hover_text = f"Ponto Inicial (Hospital) - Cidade 1: ({initial_point[0]}, {initial_point[1]})"
+        
+        fig.add_trace(go.Scatter(
+            x=[initial_point[0]],
+            y=[initial_point[1]],
+            mode='markers',
+            marker=dict(
+                size=18, 
+                color='purple',
+                opacity=0.5,
+                line=dict(width=2, color='white')
+            ),
+            name='Ponto Inicial',
+            hoverinfo='text',
+            hovertext=hover_text
+        ))
 
     fig.update_layout(
         showlegend=True,
@@ -718,6 +1111,26 @@ def create_map_pixels(best_solution, population, cities_locations):
         # Reduzir animações para evitar piscadas
         transition_duration=300
     )
+    
+    # Configurações adicionais para melhorar a visualização dos textos
+    fig.update_traces(
+        selector=dict(mode='markers+text'),
+        texttemplate='%{text}'
+    )
+    
+    # Ajusta o layout para evitar sobreposição de textos
+    fig.update_layout(
+        annotations=[],  # Remove anotações automáticas que podem causar sobreposição
+        plot_bgcolor='rgba(240, 240, 240, 0.5)',  # Fundo mais claro para melhor contraste
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(200, 200, 200, 0.2)'
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(200, 200, 200, 0.2)'
+        )
+    )
 
     return fig
  
@@ -725,18 +1138,60 @@ def create_map_pixels(best_solution, population, cities_locations):
 current_best = optimizer.best_solutions[-1] if optimizer.best_solutions else None
 current_pop = st.session_state.population if st.session_state.population else []
 
+# Obter rotas proibidas, unidirecionais e informações de veículos se as restrições estiverem ativas
+forbidden_routes = None
+one_way_routes = None
+vehicle_routes = None
+fixed_start_disabled = True  # Por padrão, considera desativado
+
+# Verificar se as restrições estão ativas e obter as rotas
+for restriction in optimizer.ga.restriction_manager.restrictions:
+    if restriction.name == "forbidden_routes":
+        forbidden_routes = list(restriction.get_all_forbidden_routes())
+    elif restriction.name == "one_way_routes":
+        one_way_routes = list(restriction.get_all_one_way_routes())
+    elif restriction.name == "fixed_start_restriction":
+        # Se encontrou a restrição de início fixo, ela está ativa
+        fixed_start_disabled = False
+    elif restriction.name == "multiple_vehicles_restriction" and current_best:
+        # Se a restrição de múltiplos veículos estiver ativa e tivermos uma solução,
+        # obtém as rotas por veículo
+        multiple_vehicles_restriction = restriction
+        
+        # Remove o depósito da rota para contar apenas os pacientes
+        depot = multiple_vehicles_restriction.depot
+        if depot:
+            patients = [city for city in current_best if city != depot]
+            
+            # Distribui pacientes entre veículos e obtém as rotas
+            vehicle_routes = multiple_vehicles_restriction._distribute_patients_to_vehicles(
+                patients, 
+                depot, 
+                multiple_vehicles_restriction.vehicle_capacity,
+                multiple_vehicles_restriction.max_vehicles
+            )
+            print(f"DEBUG: Obtidas {len(vehicle_routes)} rotas de veículos")
+
 if optimizer.use_mapbox:
     fig = create_map_mapbox(
         current_best, 
         current_pop, 
         optimizer.cities_locations, 
-        optimizer.city_names
+        optimizer.city_names,
+        forbidden_routes,
+        one_way_routes,
+        fixed_start_disabled,
+        vehicle_routes
     )
 else:
     fig = create_map_pixels(
         current_best, 
         current_pop, 
-        optimizer.cities_locations
+        optimizer.cities_locations,
+        forbidden_routes,
+        one_way_routes,
+        fixed_start_disabled,
+        vehicle_routes
     )
 
 # Usar um key estático para evitar recriação desnecessária
@@ -835,18 +1290,59 @@ if run_all and st.session_state.generation < optimizer.GENERATION_LIMIT:
  
         # Update visualizations apenas a cada 5 gerações para reduzir piscadas
         if generation % 5 == 0:
+            # Obter rotas proibidas, unidirecionais e informações de veículos se as restrições estiverem ativas
+            forbidden_routes = None
+            one_way_routes = None
+            vehicle_routes = None
+            fixed_start_disabled = True  # Por padrão, considera desativado
+
+            # Verificar se as restrições estão ativas e obter as rotas
+            for restriction in optimizer.ga.restriction_manager.restrictions:
+                if restriction.name == "forbidden_routes":
+                    forbidden_routes = list(restriction.get_all_forbidden_routes())
+                elif restriction.name == "one_way_routes":
+                    one_way_routes = list(restriction.get_all_one_way_routes())
+                elif restriction.name == "fixed_start_restriction":
+                    # Se encontrou a restrição de início fixo, ela está ativa
+                    fixed_start_disabled = False
+                elif restriction.name == "multiple_vehicles_restriction" and best_solution:
+                    # Se a restrição de múltiplos veículos estiver ativa e tivermos uma solução,
+                    # obtém as rotas por veículo
+                    multiple_vehicles_restriction = restriction
+                    
+                    # Remove o depósito da rota para contar apenas os pacientes
+                    depot = multiple_vehicles_restriction.depot
+                    if depot:
+                        patients = [city for city in best_solution if city != depot]
+                        
+                        # Distribui pacientes entre veículos e obtém as rotas
+                        vehicle_routes = multiple_vehicles_restriction._distribute_patients_to_vehicles(
+                            patients, 
+                            depot, 
+                            multiple_vehicles_restriction.vehicle_capacity,
+                            multiple_vehicles_restriction.max_vehicles
+                        )
+                    
             if optimizer.use_mapbox:
                 fig = create_map_mapbox(
                     best_solution, 
                     st.session_state.population,
                     optimizer.cities_locations,
-                    optimizer.city_names
+                    optimizer.city_names,
+                    forbidden_routes,
+                    one_way_routes,
+                    fixed_start_disabled,
+                    vehicle_routes
                 )
             else:
                 fig = create_map_pixels(
                     best_solution, 
                     st.session_state.population,
-                    optimizer.cities_locations
+                    optimizer.cities_locations,
+                    forbidden_routes,
+                    one_way_routes,
+                    fixed_start_disabled,
+                    vehicle_routes
                 )
             # Usar uma chave única baseada na geração atual
             map_key = f"map_run_gen_{generation}"
