@@ -14,7 +14,8 @@ class LLMIntegration:
             "total_cities": len(route),
             "route_coordinates": route,
             "estimated_distance": route_info.get("distance", 0) if route_info else 0,
-            "restrictions_summary": route_info.get("restrictions", {}) if route_info else {}
+            "restrictions_summary": route_info.get("restrictions", {}) if route_info else {},
+            "vehicles_used": route_info.get('vehicles_used', 1)
         }
         if self.llm_client:
             prompt = self._create_instructions_prompt(route_data, route)
@@ -72,6 +73,7 @@ DADOS DA ROTA:
 - Total de paradas: {route_data['total_cities']}
 - Distância estimada: {route_data['estimated_distance']:.2f} km
 - Restrições ativas: {route_data['restrictions_summary']}
+- Quantidade de Veiculos utilizados: {route_data['vehicles_used']}
 
 COORDENADAS: {self._format_coordinates_for_prompt(route)}
 
@@ -91,6 +93,7 @@ Você é um assistente especializado em logística médica. Gere um relatório e
 ESTATÍSTICAS:
 - Rotas executadas: {stats['total_routes']}
 - Distância total: {stats['total_distance']:.2f} km
+- Quantidade de veículos: {routes_data[0]['vehicles_used']}
 
 Formate como relatório executivo profissional.
 """

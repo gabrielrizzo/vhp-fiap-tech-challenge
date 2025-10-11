@@ -901,7 +901,13 @@ if optimizer.best_solutions:
                 st.write(f"{idx}. {optimizer.city_names[city_idx]}: ({point[0]:.4f}, {point[1]:.4f})")
             else:
                 st.write(f"{idx}. Posição: {point}")
- 
+
+    multiple_vehicle_solution = {'vehicles_used': 1}
+    best_solution = optimizer.best_solutions[-1]
+
+    if multiple_vehicles_enabled:
+        multiple_vehicle_solution = optimizer.ga.restriction_manager.get_restriction("multiple_vehicles_restriction").get_vehicle_data_for_capacity_restriction(best_solution)
+
     # 3.2 Relatório de Performance das Rotas
     with st.expander("📈 Relatório de Performance", expanded=False):
         routes_data = []
@@ -912,7 +918,8 @@ if optimizer.best_solutions:
                 'route_id': i,
                 'distance': fitness,
                 'time': fitness / 50,
-                'violations': []
+                'violations': [],
+                'vehicles_used': multiple_vehicle_solution['vehicles_used']
             })
  
         total_distance = sum(r['distance'] for r in routes_data)
@@ -922,6 +929,7 @@ if optimizer.best_solutions:
 RESUMO EXECUTIVO:
 - Total de rotas executadas: {len(routes_data)}
 - Distância total percorrida: {total_distance:.2f}
+- Quantidade de veículos: {multiple_vehicle_solution['vehicles_used']}
  
 ANÁLISE DE PERFORMANCE:
 O sistema de otimização está funcionando adequadamente. 
@@ -939,29 +947,31 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
             st.markdown(report)
         else:
             st.markdown(report)
-        st.download_button("Baixar report", data=report, file_name="relatorio-performance.md")
+        st.download_button("Baixar relatório executivo", data=report, file_name="relatorio-performance.md")
  
     # 3.3 Instruções da Rota
     with st.expander("📋 Instruções da Rota", expanded=False):
         best_solution = optimizer.best_solutions[-1]
         best_fitness = optimizer.best_fitness_values[-1]
- 
+
         route_info = {
             "distance": best_fitness,
             "restrictions": optimizer.ga.restriction_manager.get_active_restrictions(),
-            "is_valid": optimizer.ga.restriction_manager.validate_route(best_solution)
+            "is_valid": optimizer.ga.restriction_manager.validate_route(best_solution),
+            "vehicles_used": multiple_vehicle_solution['vehicles_used']
         }
  
         if optimizer.llm:
             try:
                 instructions = optimizer.llm.generate_delivery_instructions(best_solution, route_info)
                 st.markdown(instructions)
-                st.download_button("Baixar report", data=instructions, file_name="relatorio-performance.md")
+                st.download_button("Baixar instrução de rota", data=instructions, file_name="relatorio-rota.md")
             except:
                 st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
 Distância: {best_fitness:.2f}
 Locais: {len(best_solution)}
 Rota válida: {route_info['is_valid']}
+Quantidade de rotas: {multiple_vehicle_solution['vehicles_used']}
 Restrições ativas: {route_info['restrictions']}""")
         else:
             st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
@@ -987,6 +997,7 @@ Total de gerações: {len(optimizer.best_fitness_values)}
 Melhor fitness alcançado: {best_fitness:.2f}
 Estatísticas da solução final: {final_stats}
 Configuração utilizada:
+- Veículos utilizados: {multiple_vehicle_solution}
 - Tamanho da população: {optimizer.POPULATION_SIZE}
 - Limite de gerações: {optimizer.GENERATION_LIMIT}
 - Restrições: {optimizer.ga.restriction_manager.get_active_restrictions()}"""
