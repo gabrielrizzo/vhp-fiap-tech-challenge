@@ -7,11 +7,11 @@
         "plot_x_offset": 450
     },
     "genetic_algorithm": {
-        "population_size": 100,
+        "population_size": 500,
         "generation_limit": 100,
         "n_cities": 48,
         "n_exploration_generation": 1000,
-        "n_neighbors": 500
+        "n_neighbors": 5
     },
     "mutation": {
         "initial_probability": 0.85,
