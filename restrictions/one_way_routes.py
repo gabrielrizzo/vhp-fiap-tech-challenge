@@ -102,33 +102,27 @@ class OneWayRoutes(BaseRestriction):
                 return False
         return True
 
-    def calculate_penalty(
-        self,
-        route: List[Tuple[float, float]],
-        vehicle_data: Optional[Dict[str, Any]] = None,
-    ) -> float:
-        """
-        Aplica a restrição de rotas unidirecionais ao caminho fornecido.
-
-        Args:
-            route: Lista de coordenadas das cidades no caminho
-            vehicle_data: Dados adicionais do veículo (não utilizado)
-
-        Returns:
-            float: Valor da penalidade a ser adicionada ao fitness
-        """
+    def calculate_penalty(self, route, vehicle_data=None):
         from utils.helper_functions import calculate_distance
 
         penalty = 0.0
         n = len(route)
+        wrong_way_count = 0
+
         for i in range(n):
             city1 = route[i]
-            city2 = route[(i + 1) % n]  # Conecta de volta à primeira cidade
+            city2 = route[(i + 1) % n]
 
             if self.is_wrong_way(city1, city2):
-                # Aplica uma penalidade proporcional à distância da rota
+                wrong_way_count += 1
                 route_distance = calculate_distance(city1, city2)
-                penalty += self._base_distance_penalty * route_distance
+
+                distance_penalty = route_distance * 0.5  # Fator de proporcionalidade
+
+                # Penalidade crescente por número de violações
+                severity_multiplier = 1.0 + (wrong_way_count * 0.2)
+
+                penalty += distance_penalty * severity_multiplier
 
         return penalty
 

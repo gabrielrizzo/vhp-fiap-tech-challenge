@@ -28,8 +28,8 @@ class RouteUtils:
     
     @staticmethod
     @lru_cache(maxsize=10000)
-    def calculate_distance(point1: Tuple[float, float], 
-                          point2: Tuple[float, float]) -> float:
+    def calculate_distance(point1: Tuple[float, float],
+        point2:  Tuple[float, float], use_geographic=False) -> float:
         """
         Calcula distância euclidiana entre dois pontos (com cache LRU otimizado).
         
@@ -40,10 +40,34 @@ class RouteUtils:
         Returns:
             Distância euclidiana entre os pontos
         """
-        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+        if use_geographic:
+            # Para coordenadas geográficas (lat, lon)
+            return RouteUtils.haversine_distance(
+                point1[0], point1[1],
+                point2[0], point2[1]
+            )
+        else:
+            # Para pixels (ATT48)
+            return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
     
     @staticmethod
-    def calculate_route_distance(route: List[Tuple[float, float]]) -> float:
+    def haversine_distance(lat1, lon1, lat2, lon2):
+        """Calcula distância real em km entre coordenadas geográficas"""
+        R = 6371  # Raio da Terra em km
+        
+        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+        
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        
+        a = math.sin(dlat/2)**2 + \
+            math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+        c = 2 * math.asin(math.sqrt(a))
+        
+        return R * c  # Retorna em KM
+    
+    @staticmethod
+    def calculate_route_distance(route: List[Tuple[float, float]], use_geographic=False) -> float:
         """
         Calcula distância total de uma rota (otimizado com cache).
         
@@ -58,7 +82,7 @@ class RouteUtils:
         
         total_distance = 0.0
         for i in range(len(route) - 1):
-            total_distance += RouteUtils.calculate_distance(route[i], route[i + 1])
+            total_distance += RouteUtils.calculate_distance(route[i], route[i + 1], use_geographic)
         
         return total_distance
     

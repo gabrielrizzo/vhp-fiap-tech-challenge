@@ -11,7 +11,7 @@ class EnhancedGeneticAlgorithm:
         self.cities_locations = cities_locations
         self.restriction_manager = RestrictionManager()
         
-    def calculate_base_fitness(self, path: List[Tuple[float, float]]) -> float:
+    def calculate_base_fitness(self, path: List[Tuple[float, float]], use_geographic=False) -> float:
         """
         Calcula fitness base (distância total) usando RouteUtils otimizado.
         
@@ -21,11 +21,12 @@ class EnhancedGeneticAlgorithm:
         Returns:
             Distância total da rota
         """
-        return RouteUtils.calculate_route_distance(path)
+        return RouteUtils.calculate_route_distance(path, use_geographic)
     
     def calculate_fitness_with_restrictions(self, path: List[Tuple[float, float]], 
-                                         vehicle_data: Dict[str, Any] = None) -> float:
-        base_fitness = self.calculate_base_fitness(path)
+                                         vehicle_data: Dict[str, Any] = None,
+                                         use_geographic=False) -> float:
+        base_fitness = self.calculate_base_fitness(path, use_geographic)
         return self.restriction_manager.calculate_fitness_with_restrictions(
             path, base_fitness, vehicle_data
         )
