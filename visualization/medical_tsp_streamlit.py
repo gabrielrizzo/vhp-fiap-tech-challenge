@@ -604,6 +604,7 @@ with col2:
     run_all = st.button("⏩ Executar Todas", use_container_width=True, disabled=is_run_btn_disabled)
 with col3:
     reset_simulation = st.button("🔄 Resetar Simulação", use_container_width=True)
+    
  
 st.divider()
  
@@ -664,6 +665,23 @@ def create_map_mapbox(best_solution, population, cities_locations, city_names=No
         name='Hospitais'
     ))
 
+    if forbidden_routes_enabled:
+        forbidden_routes_config = optimizer.config.get("restrictions.forbidden_routes", {})
+        for route in forbidden_routes_config.get("routes", []):
+            from_idx = route.get("from")
+            to_idx = route.get("to")
+            if from_idx is not None and to_idx is not None:
+                fig.add_trace(go.Scattermap(
+                    lat=[cities_locations[from_idx][0], cities_locations[to_idx][0]],
+                    lon=[cities_locations[from_idx][1], cities_locations[to_idx][1]],
+                    mode='lines',
+                    line=dict(width=1, color='rgba(255,0,0,0.5)'), 
+                    name='Rota Proibida',
+                    showlegend=False,
+                    hoverinfo='text',
+                    text='🚫 Rota Proibida'
+                ))
+
     fig.update_layout(
         map=dict(
             style="open-street-map",
@@ -708,6 +726,23 @@ def create_map_pixels(best_solution, population, cities_locations):
         marker=dict(size=10, color='red'),
         name='Cidades'
     ))
+
+    if forbidden_routes_enabled:
+        forbidden_routes_config = optimizer.config.get("restrictions.forbidden_routes", {})
+        for route in forbidden_routes_config.get("routes", []):
+            from_idx = route.get("from")
+            to_idx = route.get("to")
+            if from_idx is not None and to_idx is not None:
+                fig.add_trace(go.Scatter(
+                    x=[cities_locations[from_idx][0], cities_locations[to_idx][0]],
+                    y=[cities_locations[from_idx][1], cities_locations[to_idx][1]],
+                    mode='lines',
+                    line=dict(width=2, color='red', dash='dot'), 
+                    name='Rota Proibida',
+                    showlegend=False,
+                    hoverinfo='text',
+                    text='🚫 Rota Proibida'
+                ))
 
     fig.update_layout(
         showlegend=True,
