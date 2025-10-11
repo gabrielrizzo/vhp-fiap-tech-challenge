@@ -9,6 +9,9 @@ import random
 import itertools
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 from core.enhanced_genetic_algorithm import EnhancedGeneticAlgorithm
 from core.restriction_manager import RestrictionManager
 from core.config_manager import ConfigManager
@@ -449,7 +452,7 @@ with st.sidebar:
     st.subheader("🚧 Restrições")
 
     # Fuel Restriction
-    fuel_enabled = st.checkbox("Combustível", value=True, help="Limita distância máxima e custo de combustível")
+    fuel_enabled = st.checkbox("Combustível", value=False, help="Limita distância máxima e custo de combustível")
     fuel_max_distance = 250.0
     fuel_cost_per_km = 0.8
     fuel_cost_limit = 300.0
@@ -460,27 +463,27 @@ with st.sidebar:
             fuel_cost_limit = st.number_input("Limite de Custo (R$)", min_value=0.0, max_value=1000.0, value=300.0, step=10.0)
 
     # Vehicle Capacity Restriction
-    capacity_enabled = st.checkbox("Capacidade do Veículo", value=True, help="Limita número de pacientes por veículo")
+    capacity_enabled = st.checkbox("Capacidade do Veículo", value=False, help="Limita número de pacientes por veículo")
     max_patients = 10
     if capacity_enabled:
         with st.expander("⚙️ Configurar Capacidade"):
             max_patients = st.slider("Pacientes por Veículo", min_value=1, max_value=20, value=10, step=1)
 
     # Fixed Start Restriction
-    fixed_start_enabled = st.checkbox("Início Fixo (Hospital)", value=True, help="Força rota começar no hospital")
+    fixed_start_enabled = st.checkbox("Início Fixo (Hospital)", value=False, help="Força rota começar no hospital")
 
     # Route Cost Restriction
-    route_cost_enabled = st.checkbox("Custo de Rotas", value=True, help="Adiciona custos específicos para certas rotas (pedágios, etc)")
+    route_cost_enabled = st.checkbox("Custo de Rotas", value=False, help="Adiciona custos específicos para certas rotas (pedágios, etc)")
 
     # Multiple Vehicles Restriction
-    multiple_vehicles_enabled = st.checkbox("Múltiplos Veículos", value=True, help="Permite distribuir pacientes entre várias ambulâncias")
+    multiple_vehicles_enabled = st.checkbox("Múltiplos Veículos", value=False, help="Permite distribuir pacientes entre várias ambulâncias")
     max_vehicles = 5
     if multiple_vehicles_enabled:
         with st.expander("⚙️ Configurar Veículos"):
-            max_vehicles = st.slider("Número Máximo de Veículos", min_value=1, max_value=10, value=5, step=1)
+            max_vehicles = st.slider("Número Máximo de Veículos", min_value=1, max_value=5, value=5, step=1)
             
     # Forbidden Routes Restriction
-    forbidden_routes_enabled = st.checkbox("Rotas Proibidas", value=True, help="Define rotas que não podem ser percorridas")
+    forbidden_routes_enabled = st.checkbox("Rotas Proibidas", value=False, help="Define rotas que não podem ser percorridas")
     forbidden_routes_penalty = 1000.0
     if forbidden_routes_enabled:
         with st.expander("⚙️ Configurar Rotas Proibidas"):
@@ -488,7 +491,7 @@ with st.sidebar:
             st.info("As rotas proibidas são definidas no arquivo de configuração. Para adicionar ou remover rotas proibidas específicas, edite o arquivo config/medical_tsp_config.json")
     
     # One-Way Routes Restriction
-    one_way_routes_enabled = st.checkbox("Rotas Unidirecionais", value=True, help="Define rotas que só podem ser percorridas em uma direção")
+    one_way_routes_enabled = st.checkbox("Rotas Unidirecionais", value=False, help="Define rotas que só podem ser percorridas em uma direção")
     one_way_routes_penalty = 1000.0
     if one_way_routes_enabled:
         with st.expander("⚙️ Configurar Rotas Unidirecionais"):
@@ -731,7 +734,7 @@ def create_map_mapbox(best_solution, population, cities_locations, city_names=No
 
     if best_solution:
         # Cores para diferentes veículos
-        vehicle_colors = ['blue', 'red', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'brown', 'pink']
+        vehicle_colors = ['blue', 'orange', 'purple', 'cyan', 'yellow', 'brown', 'pink']
         
         # Se temos rotas de veículos, desenhamos cada uma separadamente
         if vehicle_routes and len(vehicle_routes) > 0:
@@ -965,7 +968,7 @@ def create_map_pixels(best_solution, population, cities_locations, forbidden_rou
 
     if best_solution:
         # Cores para diferentes veículos
-        vehicle_colors = ['blue', 'red', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'brown', 'pink']
+        vehicle_colors = ['blue', 'orange', 'purple', 'cyan', 'yellow', 'brown', 'pink']
         
         # Se temos rotas de veículos, desenhamos cada uma separadamente
         if vehicle_routes and len(vehicle_routes) > 0:
@@ -1198,7 +1201,26 @@ else:
 map_placeholder.plotly_chart(fig, use_container_width=True, key="initial_map_view")
  
 if optimizer.best_fitness_values:
-    fitness_placeholder.line_chart(optimizer.best_fitness_values, height=300)
+    # Create matplotlib figure
+    fig, ax = plt.subplots(figsize=(10, 4))
+    
+    # Plot the fitness values
+    generations = range(1, len(optimizer.best_fitness_values) + 1)
+    ax.plot(generations, optimizer.best_fitness_values, 'b-', linewidth=2)
+    
+    # Customize the plot
+    ax.set_title("Evolução do Fitness", fontsize=14, fontweight='bold')
+    ax.set_xlabel("Geração", fontsize=12)
+    ax.set_ylabel("Fitness (Distância)", fontsize=12)
+    ax.grid(True, alpha=0.3)
+    ax.tick_params(axis='both', which='major', labelsize=10)
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Display in Streamlit
+    fitness_placeholder.pyplot(fig)
+    plt.close(fig)
  
 # Execute next generation
 if next_gen and st.session_state.generation < optimizer.GENERATION_LIMIT:
@@ -1349,7 +1371,26 @@ if run_all and st.session_state.generation < optimizer.GENERATION_LIMIT:
             map_placeholder.plotly_chart(fig, use_container_width=True, key=map_key)
 
             if optimizer.best_fitness_values:
-                fitness_placeholder.line_chart(optimizer.best_fitness_values, height=300)
+                # Create matplotlib figure
+                fig, ax = plt.subplots(figsize=(10, 4))
+                
+                # Plot the fitness values
+                generations = range(1, len(optimizer.best_fitness_values) + 1)
+                ax.plot(generations, optimizer.best_fitness_values, 'b-', linewidth=2)
+                
+                # Customize the plot
+                ax.set_title("Evolução do Fitness", fontsize=14, fontweight='bold')
+                ax.set_xlabel("Geração", fontsize=12)
+                ax.set_ylabel("Fitness (Distância)", fontsize=12)
+                ax.grid(True, alpha=0.3)
+                ax.tick_params(axis='both', which='major', labelsize=10)
+                
+                # Adjust layout
+                plt.tight_layout()
+                
+                # Display in Streamlit
+                fitness_placeholder.pyplot(fig)
+                plt.close(fig)
  
         st.session_state.population = optimizer.create_new_generation(st.session_state.population, population_fitness, current_diversity)
  
