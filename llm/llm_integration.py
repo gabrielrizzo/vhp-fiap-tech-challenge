@@ -72,7 +72,7 @@ Você é um assistente especializado em logística médica. Gere instruções de
 DADOS DA ROTA:
 - Total de paradas: {route_data['total_cities']}
 - Distância estimada: {route_data['estimated_distance']:.2f} km
-- Restrições ativas: {route_data['restrictions_summary']}
+- Restrições ativas: {route_data['restrictions_summary'] or 'Nenhuma'}
 - Quantidade de Veiculos utilizados: {route_data['vehicles_used']}
 
 COORDENADAS: {self._format_coordinates_for_prompt(route)}
