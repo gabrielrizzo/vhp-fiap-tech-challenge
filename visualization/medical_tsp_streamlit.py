@@ -443,18 +443,16 @@ with st.sidebar:
     forbidden_routes_enabled = st.checkbox("Rotas Proibidas", value=False, help="Define rotas que não podem ser percorridas")
     forbidden_routes_penalty = 1000.0
     if forbidden_routes_enabled:
-        with st.expander("⚙️ Configurar Rotas Proibidas"):
-            forbidden_routes_penalty = st.number_input("Penalidade Base", min_value=100.0, max_value=5000.0, value=1000.0, step=100.0)
+        with st.expander("ℹ️ Informação de Rotas Proibidas"):
             st.info("As rotas proibidas são definidas no arquivo de configuração. Para adicionar ou remover rotas proibidas específicas, edite o arquivo config/medical_tsp_config.json")
     
     # One-Way Routes Restriction
     one_way_routes_enabled = st.checkbox("Rotas Unidirecionais", value=False, help="Define rotas que só podem ser percorridas em uma direção")
     one_way_routes_penalty = 1000.0
     if one_way_routes_enabled:
-        with st.expander("⚙️ Configurar Rotas Unidirecionais"):
-            one_way_routes_penalty = st.number_input("Penalidade Base (Mão Única)", min_value=100.0, max_value=5000.0, value=1000.0, step=100.0)
+        with st.expander("ℹ️ Informação de Rotas Unidirecionais"):
             st.info("As rotas unidirecionais são definidas no arquivo de configuração. Para adicionar ou remover rotas unidirecionais específicas, edite o arquivo config/medical_tsp_config.json")
- 
+
     st.divider()
  
     # Botão para aplicar configurações
