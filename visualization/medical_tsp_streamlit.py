@@ -147,10 +147,8 @@ class MedicalRouteTSP:
         # Usa configurações do sidebar se disponíveis, senão usa config.json
         if hasattr(self, 'sidebar_config') and self.sidebar_config:
             # Sidebar tem prioridade total
-            fuel_enabled = self.sidebar_config.get('fuel_enabled', False)
             capacity_enabled = self.sidebar_config.get('capacity_enabled', False)
             fixed_start_enabled = self.sidebar_config.get('fixed_start_enabled', False)
-            route_cost_enabled = self.sidebar_config.get('route_cost_enabled', False)
             multiple_vehicles_enabled = self.sidebar_config.get('multiple_vehicles_enabled', False)
             forbidden_routes_enabled = self.sidebar_config.get('forbidden_routes_enabled', False)
             one_way_routes_enabled = self.sidebar_config.get('one_way_routes_enabled', False)
@@ -164,19 +162,15 @@ class MedicalRouteTSP:
             one_way_routes_penalty = self.sidebar_config.get('one_way_routes_penalty', 1000.0)
  
             print(f"DEBUG - Using sidebar config:")
-            print(f"  fuel_enabled: {fuel_enabled}")
             print(f"  capacity_enabled: {capacity_enabled}")
             print(f"  fixed_start_enabled: {fixed_start_enabled}")
-            print(f"  route_cost_enabled: {route_cost_enabled}")
             print(f"  multiple_vehicles_enabled: {multiple_vehicles_enabled}")
             print(f"  forbidden_routes_enabled: {forbidden_routes_enabled}")
             print(f"  one_way_routes_enabled: {one_way_routes_enabled}")
         else:
             # Usa config.json apenas se não houver sidebar_config
-            fuel_enabled = fuel_config.get("enabled", True)
             capacity_enabled = capacity_config.get("enabled", True)
             fixed_start_enabled = hospital_config.get("enabled", True)
-            route_cost_enabled = route_cost_config.get("enabled", True)
             multiple_vehicles_enabled = multiple_vehicles_config.get("enabled", True)
             forbidden_routes_enabled = forbidden_routes_config.get("enabled", True)
             one_way_routes_enabled = one_way_routes_config.get("enabled", True)
@@ -192,17 +186,6 @@ class MedicalRouteTSP:
             print(f"DEBUG - Using config.json (no sidebar)")
  
         # Cria restrições apenas se estiverem habilitadas
-        if fuel_enabled:
-            fuel_restriction = FuelRestriction(
-                max_distance=fuel_max_distance,
-                fuel_cost_per_km=fuel_cost_per_km,
-                fuel_cost_limit=fuel_cost_limit,
-                pixel_to_km_factor=fuel_config.get("pixel_to_km_factor", 0.02)
-            )
-            fuel_restriction.set_weight(fuel_config.get("weight", 1.0))
-            self.ga.restriction_manager.add_restriction(fuel_restriction)
-            print("  + Fuel restriction added")
- 
         if capacity_enabled:
             capacity_restriction = VehicleCapacityRestriction(
                 max_patients_per_vehicle=max_patients
@@ -210,18 +193,6 @@ class MedicalRouteTSP:
             capacity_restriction.set_weight(capacity_config.get("weight", 1.0))
             self.ga.restriction_manager.add_restriction(capacity_restriction)
             print("  + Capacity restriction added")
- 
-        if route_cost_enabled:
-            is_att_48 = self.dataset_type == 'att48'
-            route_cost = route_costs_att_48 if is_att_48 else route_costs_hospital_sp
-            cities_locations = self.cities_locations
-            route_cost_restriction = RouteCostRestriction(
-                cities_locations=cities_locations,
-                route_cost_dict=route_cost,
-            )
-            route_cost_restriction.set_weight(route_cost_config.get("weight", 1.0))
-            self.ga.restriction_manager.add_restriction(route_cost_restriction)
-            print("  + Route cost restriction added")
  
         if fixed_start_enabled:
             from restrictions.fixed_start_restriction import FixedStartRestriction
@@ -451,17 +422,6 @@ with st.sidebar:
     # Restrictions configuration
     st.subheader("🚧 Restrições")
 
-    # Fuel Restriction
-    fuel_enabled = st.checkbox("Combustível", value=False, help="Limita distância máxima e custo de combustível")
-    fuel_max_distance = 250.0
-    fuel_cost_per_km = 0.8
-    fuel_cost_limit = 300.0
-    if fuel_enabled:
-        with st.expander("⚙️ Configurar Combustível"):
-            fuel_max_distance = st.number_input("Distância Máxima (km)", min_value=50.0, max_value=500.0, value=250.0, step=10.0)
-            fuel_cost_per_km = st.number_input("Custo por km (R$)", min_value=0.1, max_value=5.0, value=0.8, step=0.1)
-            fuel_cost_limit = st.number_input("Limite de Custo (R$)", min_value=0.0, max_value=1000.0, value=300.0, step=10.0)
-
     # Vehicle Capacity Restriction
     capacity_enabled = st.checkbox("Capacidade do Veículo", value=False, help="Limita número de pacientes por veículo")
     max_patients = 10
@@ -471,9 +431,6 @@ with st.sidebar:
 
     # Fixed Start Restriction
     fixed_start_enabled = st.checkbox("Início Fixo (Hospital)", value=False, help="Força rota começar no hospital")
-
-    # Route Cost Restriction
-    route_cost_enabled = st.checkbox("Custo de Rotas", value=False, help="Adiciona custos específicos para certas rotas (pedágios, etc)")
 
     # Multiple Vehicles Restriction
     multiple_vehicles_enabled = st.checkbox("Múltiplos Veículos", value=False, help="Permite distribuir pacientes entre várias ambulâncias")
@@ -506,7 +463,7 @@ with st.sidebar:
     st.divider()
  
     # Summary of active restrictions
-    active_count = sum([fuel_enabled, capacity_enabled, fixed_start_enabled, route_cost_enabled, multiple_vehicles_enabled, forbidden_routes_enabled, one_way_routes_enabled])
+    active_count = sum([capacity_enabled, fixed_start_enabled, multiple_vehicles_enabled, forbidden_routes_enabled, one_way_routes_enabled])
     st.caption(f"✅ {active_count} restrições ativas")
  
     if dataset_choice == 'att48':
@@ -518,16 +475,6 @@ with st.sidebar:
 if 'generation' not in st.session_state or st.session_state.get('dataset_type') != dataset_choice or apply_config:
     # Criar dicionário de configurações do sidebar
     sidebar_config = {}
-    if fuel_enabled:
-        sidebar_config.update({
-            'fuel_enabled': fuel_enabled,
-            'fuel_max_distance': fuel_max_distance if fuel_enabled else 250.0,
-            'fuel_cost_per_km': fuel_cost_per_km if fuel_enabled else 0.8,
-            'fuel_cost_limit': fuel_cost_limit if fuel_enabled else 300.0,
-        })
-    else:
-        sidebar_config['fuel_enabled'] = False
- 
     if capacity_enabled:
         sidebar_config.update({
             'capacity_enabled': capacity_enabled,
@@ -537,7 +484,6 @@ if 'generation' not in st.session_state or st.session_state.get('dataset_type') 
         sidebar_config['capacity_enabled'] = False
 
     sidebar_config['fixed_start_enabled'] = fixed_start_enabled
-    sidebar_config['route_cost_enabled'] = route_cost_enabled
 
     if multiple_vehicles_enabled:
         sidebar_config.update({
