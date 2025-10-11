@@ -305,6 +305,246 @@ O sistema usa `config/medical_tsp_config.json` para todas as configurações:
 ### Configuração Dinâmica (Streamlit)
 Na interface Streamlit, você pode configurar restrições dinamicamente via sidebar sem editar arquivos.
 
+# Operadores Genéticos
+
+## 1. Inicialização da População
+
+### 1.1 Geração Aleatória
+- **Função**: `generate_random_population()`
+- **Descrição**: Gera indivíduos aleatórios através de permutação das cidades
+- **Implementação**: Utiliza `random.sample()` para garantir que cada cidade apareça exatamente uma vez
+- **Parâmetros**: 
+  - `population_size`: Tamanho da população (configurável via JSON)
+
+### 1.2 Heurística do Vizinho Mais Próximo
+- **Função**: `generate_nearest_neighbor()`
+- **Descrição**: Algoritmo que sempre escolhe a cidade mais próxima não visitada.
+- **Implementação**: 
+  1. Seleciona cidade inicial aleatória
+  2. Para cada cidade restante, calcula distância até a última cidade visitada
+  3. Adiciona a cidade com menor distância à rota
+- **Uso**: Hotstart da população inicial
+
+### 1.3 Estratégia Híbrida de Inicialização
+- **Objetivo**: Balancear diversidade genética com qualidade inicial. Tem que ser utilizado com cautela para não fazermos com que a população fique com diversidade baixa e atrapalhe a sua evolução.
+- **Configuração**: `N_NEIGHBORS` no arquivo de configuração
+
+## 2. Operadores de Seleção
+
+### 2.1 Seleção por Torneio
+- **Função**: `tournament_selection()`
+- **Descrição**: Seleciona o melhor indivíduo de um grupo aleatório
+- **Implementação**:
+  1. Seleciona 2 indivíduos aleatórios
+  2. Calcula fitness de ambos
+  3. Retorna o de melhor fitness
+- **Vantagens**: Simples, eficiente, mantém pressão seletiva
+
+### 2.2 Seleção por Ranking
+- **Função**: `rank_based_selection()`
+- **Descrição**: Probabilidade de seleção baseada na posição no ranking
+- **Implementação**:
+  1. Ordena população por fitness
+  2. Atribui probabilidade inversamente proporcional ao ranking
+  3. Seleciona baseado nas probabilidades calculadas
+- **Fórmula**: `P(rank) = 1/(rank + 1)`
+- **Vantagens**: Evita convergência prematura, distribui chances de seleção
+
+### 2.3 Seleção Híbrida
+- **Função**: `tournament_or_rank_based_selection()`
+- **Descrição**: Combina torneio e ranking com probabilidade configurável
+- **Parâmetros**:
+  - `tournament_prob`: Probabilidade de usar torneio (padrão: 0.7)
+- **Estratégia**: 70% torneio, 30% ranking
+
+### 2.4 Seleção Consciente de Diversidade
+- **Função**: `fast_diversity_aware_selection()`
+- **Descrição**: Adapta estratégia de seleção baseada no nível de diversidade
+- **Implementação**:
+  - Baixa diversidade (< 0.3): Seleção aleatória pura
+  - Alta diversidade (≥ 0.3): Seleção híbrida (torneio + ranking)
+- **Objetivo**: Manter diversidade genética quando necessário
+
+## 3. Operadores de Crossover
+
+### 3.1 Order Crossover (OX)
+- **Função**: `order_crossover()`
+- **Descrição**: Preserva ordem relativa dos genes dos pais
+- **Implementação**:
+  1. Seleciona segmento aleatório do Pai 1
+  2. Copia segmento para Filho 1
+  3. Preenche posições restantes com genes do Pai 2 (preservando ordem)
+  4. Repete processo para Filho 2 com papéis invertidos
+- **Vantagens**: 
+  - Mantém características de rota válida
+  - Preserva sequências promissoras
+  - Adequado para problemas de permutação
+
+## 4. Operadores de Mutação
+
+### 4.1 Mutação Hard
+- **Função**: `mutate_hard()`
+- **Descrição**: Reordena segmento aleatório da rota
+- **Implementação**:
+  1. Verifica probabilidade de mutação
+  2. Seleciona segmento aleatório de tamanho `intensity`
+  3. Embaralha genes do segmento usando `np.random.shuffle()`
+  4. Substitui segmento original pelo embaralhado
+- **Parâmetros**:
+  - `mutation_probability`: Probabilidade de mutação (0.0-1.0)
+  - `intensity`: Tamanho do segmento a ser mutado
+- **Configuração Dinâmica**:
+  - Fase de exploração: `intensity = 25`, `probability = 0.85`
+  - Fase de refinamento: `intensity = 5`, `probability = 0.5`
+
+### 4.2 Mutação Consciente de Diversidade
+- **Função**: `simple_diversity_aware_mutation()`
+- **Descrição**: Ajusta intensidade de mutação baseada na diversidade
+- **Implementação**:
+  - Baixa diversidade (< 0.3): Aplica 3 mutações consecutivas
+  - Alta diversidade (≥ 0.3): Aplica mutação normal
+- **Objetivo**: Aumentar diversidade quando população converge
+
+### 4.3 Ajuste Dinâmico de Parâmetros
+- **Função**: `update_mutation_parameters()`
+- **Descrição**: Aumenta intensidade e probabilidade quando estagnação é detectada
+- **Critério**: 100 gerações sem melhoria
+- **Ajustes**:
+  - Intensidade: +1 (máximo: N_CITIES/2)
+  - Probabilidade: +0.02 (máximo: 0.9)
+
+## 5. Estratégias de Preservação
+
+### 5.1 Elitismo
+- **Implementação**: Preserva o melhor indivíduo de cada geração
+- **Código**: `new_population = [population[0]]  # Elitism`
+- **Objetivo**: Garantir que a melhor solução não seja perdida
+
+### 5.2 Ordenação da População
+- **Função**: `sort_population()`
+- **Descrição**: Ordena população por fitness (menor distância = melhor)
+- **Implementação**: Usa `sorted()` com chave de fitness
+- **Resultado**: Melhor indivíduo sempre na posição 0
+
+## 6. Gerenciamento de Diversidade
+
+### 6.1 Monitoramento de Diversidade
+- **Função**: `population_edge_diversity()`
+- **Descrição**: Calcula diversidade baseada em arestas compartilhadas
+- **Implementação**:
+  1. Amostra pares de indivíduos aleatoriamente
+  2. Compara arestas (conexões entre cidades)
+  3. Calcula proporção de arestas diferentes
+- **Métrica**: Valor entre 0 (idênticos) e 1 (completamente diferentes)
+
+### 6.2 Injeção de Diversidade
+- **Função**: `manage_diversity()`
+- **Descrição**: Injeta novos indivíduos quando diversidade é baixa
+- **Estratégias**:
+  - **Aleatória**: `inject_random_individuals()` - 50% das vezes
+  - **Heurística**: `inject_heuristic_individuals()` - 50% das vezes
+- **Parâmetros**:
+  - `diversity_threshold`: 0.3 (limiar para injeção)
+  - `injection_rate`: 0.1 (10% da população)
+  - `monitor_frequency`: 50 (verifica a cada 50 gerações)
+
+### 6.3 Injeção de Indivíduos Aleatórios
+- **Função**: `inject_random_individuals()`
+- **Descrição**: Substitui piores indivíduos por soluções aleatórias
+- **Implementação**: Gera novos indivíduos e substitui os piores da população
+
+### 6.4 Injeção de Indivíduos Heurísticos
+- **Função**: `inject_heuristic_individuals()`
+- **Descrição**: Substitui piores indivíduos por soluções do vizinho mais próximo
+- **Implementação**: Gera soluções heurísticas com diferentes cidades iniciais
+
+## 7. Fases do Algoritmo
+
+### 7.1 Fase de Exploração
+- **Duração**: Primeiras 1000 gerações (configurável)
+- **Características**:
+  - Mutação intensa (intensity = 25)
+  - Alta probabilidade de mutação (0.85)
+  - Foco em explorar espaço de soluções
+- **Objetivo**: Encontrar regiões promissoras
+
+### 7.2 Fase de Refinamento
+- **Duração**: Após fase de exploração
+- **Características**:
+  - Mutação suave (intensity = 5)
+  - Baixa probabilidade de mutação (0.5)
+  - Foco em melhorar soluções encontradas
+- **Objetivo**: Refinar soluções promissoras
+
+## 8. Configurações dos Operadores
+
+### 8.1 Parâmetros Principais
+```json
+{
+  "genetic_algorithm": {
+    "population_size": 500,
+    "generation_limit": 100,
+    "n_exploration_generation": 1000,
+    "n_neighbors": 5
+  },
+  "mutation": {
+    "initial_probability": 0.85,
+    "initial_intensity": 25,
+    "after_exploration_intensity": 5,
+    "after_exploration_probability": 0.5
+  },
+  "diversity": {
+    "threshold": 0.3,
+    "injection_rate": 0.1,
+    "monitor_frequency": 50
+  }
+}
+```
+
+### 8.2 Parâmetros de Seleção
+- **Torneio**: Probabilidade de 70% (configurável)
+- **Ranking**: Probabilidade de 30% (configurável)
+- **Diversidade**: Limiar de 0.3 para mudança de estratégia
+
+## 9. Integração com Restrições
+
+### 9.1 Cálculo de Fitness
+- **Função**: `calculate_fitness_with_restrictions()`
+- **Descrição**: Combina distância base com penalidades de restrições
+- **Implementação**: 
+  1. Calcula distância total da rota
+  2. Aplica penalidades por violações de restrições
+  3. Retorna fitness final (menor = melhor)
+
+### 9.2 Validação de Indivíduos
+- **Função**: `validate_population()`
+- **Descrição**: Verifica se indivíduos atendem às restrições
+- **Uso**: Estatísticas e monitoramento de qualidade
+
+## 10. Otimizações Implementadas
+
+### 10.1 Cache de Distâncias
+- **Implementação**: `RouteUtils.calculate_distance()`
+- **Benefício**: Evita recálculos desnecessários
+- **Impacto**: Melhora significativa na performance
+
+### 10.2 Amostragem para Diversidade
+- **Implementação**: Amostra de 10-20 pares para cálculo de diversidade
+- **Benefício**: Reduz complexidade computacional
+- **Precisão**: Mantém precisão suficiente para decisões
+
+### 10.3 Seleção Adaptativa
+- **Implementação**: Muda estratégia baseada na diversidade
+- **Benefício**: Balanceia exploração e exploração automaticamente
+
+## 11. Considerações de Implementação
+
+### 11.1 Monitoramento e Debugging
+- **Logs de geração**: A cada 100 gerações (configurável)
+- **Métricas de diversidade**: Monitoramento contínuo
+- **Estatísticas de população**: Validação e penalidades
+- **Relatórios de rota**: Integração com LLM para análise
+
 ## 🧪 Testes
 
 ### Executar Todos os Testes
