@@ -427,7 +427,14 @@ with st.sidebar:
     max_patients = 10
     if capacity_enabled:
         with st.expander("⚙️ Configurar Capacidade"):
-            max_patients = st.slider("Pacientes por Veículo", min_value=1, max_value=20, value=10, step=1)
+            max_patients = st.slider(
+                "Pacientes por Veículo", 
+                min_value=10, 
+                max_value=48, 
+                value=10, 
+                step=1,
+                help=f"Ajuste a capacidade e o número de veículos para atender todos os {48} pontos"
+            )
 
     # Fixed Start Restriction
     fixed_start_enabled = st.checkbox("Início Fixo (Hospital)", value=False, help="Força rota começar no hospital")
@@ -437,7 +444,14 @@ with st.sidebar:
     max_vehicles = 5
     if multiple_vehicles_enabled:
         with st.expander("⚙️ Configurar Veículos"):
-            max_vehicles = st.slider("Número Máximo de Veículos", min_value=1, max_value=5, value=5, step=1)
+            max_vehicles = st.slider(
+                "Número Máximo de Veículos", 
+                min_value=2, 
+                max_value=5,
+                value=5, 
+                step=1,               
+                help=f"Ajuste a capacidade e o número de veículos para atender todos os {48} pontos"
+            )
             
     # Forbidden Routes Restriction
     forbidden_routes_enabled = st.checkbox("Rotas Proibidas", value=False, help="Define rotas que não podem ser percorridas")
@@ -455,8 +469,24 @@ with st.sidebar:
 
     st.divider()
  
+    # Validação das configurações de capacidade e número de veículos
+    validation_error = None
+    if capacity_enabled and multiple_vehicles_enabled:
+        total_capacity = max_patients * max_vehicles
+        if total_capacity < 48:
+            validation_error = f"⚠️ **Configuração Inválida**: Capacidade total ({max_patients} × {max_vehicles} = {total_capacity}) é menor que o número de pontos no mapa (48). Ajuste os valores para atender todos os pontos."
+    elif capacity_enabled:
+        total_capacity = max_patients
+        if total_capacity < 48:
+            validation_error = f"⚠️ **Configuração Inválida**: Capacidade total ({max_patients} = {total_capacity}) é menor que o número de pontos no mapa (48). Ajuste os valores para atender todos os pontos."
+
+    # Exibir erro de validação se houver
+    if validation_error:
+        st.error(validation_error)
+        st.info("💡 **Sugestão**: Aumente o número de veículos ou a capacidade por veículo para cobrir todos os 48 pontos.")
+ 
     # Botão para aplicar configurações
-    apply_config = st.button("🔄 Aplicar Configurações", use_container_width=True, type="primary")
+    apply_config = st.button("🔄 Aplicar Configurações", use_container_width=True, type="primary", disabled=validation_error is not None)
  
     st.divider()
  
@@ -1386,7 +1416,7 @@ if optimizer.best_solutions:
     multiple_vehicle_solution = {'vehicles_used': 1}
     best_solution = optimizer.best_solutions[-1]
 
-    if multiple_vehicles_enabled:
+    if multiple_vehicles_enabled and optimizer.ga.restriction_manager.get_restriction("multiple_vehicles_restriction"):
         multiple_vehicle_solution = optimizer.ga.restriction_manager.get_restriction("multiple_vehicles_restriction").get_vehicle_data_for_capacity_restriction(best_solution)
 
     # 3.2 Relatório de Performance das Rotas
@@ -1400,7 +1430,7 @@ if optimizer.best_solutions:
                 'distance': fitness,
                 'time': fitness / 50,
                 'violations': [],
-                'vehicles_used': multiple_vehicle_solution['vehicles_used']
+                'vehicles_used': multiple_vehicle_solution.get('vehicles_used',0)
             })
  
         total_distance = sum(r['distance'] for r in routes_data)
@@ -1410,7 +1440,7 @@ if optimizer.best_solutions:
 RESUMO EXECUTIVO:
 - Total de rotas executadas: {len(routes_data)}
 - Distância total percorrida: {total_distance:.2f}
-- Quantidade de veículos: {multiple_vehicle_solution['vehicles_used']}
+- Quantidade de veículos: {multiple_vehicle_solution.get('vehicles_used', 0)}
  
 ANÁLISE DE PERFORMANCE:
 O sistema de otimização está funcionando adequadamente. 
@@ -1438,28 +1468,30 @@ OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhad
         route_info = {
             "distance": best_fitness,
             "restrictions": optimizer.ga.restriction_manager.get_active_restrictions(),
-            "is_valid": optimizer.ga.restriction_manager.validate_route(best_solution),
-            "vehicles_used": multiple_vehicle_solution['vehicles_used']
+            "is_valid": optimizer.ga.restriction_manager.validate_route(best_solution, multiple_vehicle_solution),
+            "vehicles_used": multiple_vehicle_solution.get('vehicles_used', 0)
         }
- 
+
+        default_instructions = f"""
+=== INSTRUÇÕES DA ROTA === \n
+Utilize as rotas fornecidas acima no detalhes da rota atual. Abaixo seguem mais instruções sobre a sua viagem \n
+
+Distância: {best_fitness:.2f}
+Locais: {len(best_solution)}
+Rota válida: {route_info['is_valid']}
+Quantidade de rotas: {multiple_vehicle_solution['vehicles_used']}
+Restrições ativas: {route_info['restrictions']}\n
+OBSERVAÇÃO: Relatório em modo fallback. Configure LLM para análises detalhadas.
+"""
         if optimizer.llm:
             try:
                 instructions = optimizer.llm.generate_delivery_instructions(best_solution, route_info)
                 st.markdown(instructions)
                 st.download_button("Baixar instrução de rota", data=instructions, file_name="relatorio-rota.md")
             except:
-                st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
-Distância: {best_fitness:.2f}
-Locais: {len(best_solution)}
-Rota válida: {route_info['is_valid']}
-Quantidade de rotas: {multiple_vehicle_solution['vehicles_used']}
-Restrições ativas: {route_info['restrictions']}""")
+                st.markdown(default_instructions)
         else:
-            st.markdown(f"""=== INSTRUÇÕES DA ROTA ===
-Distância: {best_fitness:.2f}
-Locais: {len(best_solution)}
-Rota válida: {route_info['is_valid']}
-Restrições ativas: {route_info['restrictions']}""")
+            st.markdown(default_instructions)
  
 # Final message when simulation is complete
 if st.session_state.generation >= optimizer.GENERATION_LIMIT:
