@@ -180,13 +180,10 @@ docker-compose exec medical-tsp bash  # Acessar container
 
 ## 🔧 Restrições Implementadas
 
-### 1. ⛽ Restrição de Combustível
-Limita a distância máxima e calcula custos de combustível.
-
-📖 [**Documentação Detalhada**](docs/restrictions/fuel_restriction.md)
-
 ### 1. 🚗 Capacidade do Veículo
 Limita o número de pacientes por veículo.
+
+📖 [**Documentação Detalhada**](docs/restrictions/vehicle_capacity.md)
 
 **Configuração:**
 - `max_patients_per_vehicle`: Pacientes por veículo (padrão: 10)
@@ -196,6 +193,8 @@ Limita o número de pacientes por veículo.
 
 ### 2. 🚑 Múltiplos Veículos
 Distribui pacientes entre várias ambulâncias.
+
+📖 [**Documentação Detalhada**](docs/restrictions/multiple_vehicles.md)
 
 **Configuração:**
 - `max_vehicles`: Número máximo de veículos (padrão: 5)
