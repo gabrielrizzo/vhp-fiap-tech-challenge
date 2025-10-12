@@ -580,6 +580,23 @@ Projeto acadêmico - FIAP Tech Challenge Fase 2 - IA para Devs
 
 ---
 
+# Exemplo de resultados
+
+## ATT 48
+Obtivemos resultados expressivos com uma população de 500 indivíduos com limite de geração de 2000
+
+![Imagem](evolução-att-48.png)
+
+Iniciamos com um fitness de aproximadamente 22 mil, com hot start de 5 individuos com KNN e conseguimos chegar a menos de 8 mil de fitness
+
+## Hospital SP
+
+Obtivemos resultados expressivos com uma população de 500 indivíduos com limite de geração de 2000
+
+Iniciamos com 1600 de fitness e terminamos com uma melhora grande, no fim, com 1073.05
+
+![Imagem](evolucao-fitness-hospital-sp.png)
+
 **Projeto desenvolvido para o Tech Challenge da FIAP - Fase 2**
 
 *Última atualização: Outubro 2025*
