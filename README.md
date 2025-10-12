@@ -30,25 +30,25 @@ Este projeto implementa um sistema completo de otimização de rotas para veícu
 ### ✅ Status do Projeto - COMPLETO
 
 - **Algoritmo Genético**: Sistema completo com operadores especializados
-- **7 Restrições Médicas**: Sistema modular para constraints realistas  
+- **5 Restrições Médicas**: Sistema modular para constraints realistas  
 - **Integração LLM**: Sistema completo de IA para instruções e relatórios
-- **Visualização**: Interfaces Pygame e Streamlit com mapas reais
+- **Implementam 2 problemas**: Problema do ATT48 e hospitais de SP, ambos aplicando restrições.
+- **Visualização**: Interface Streamlit com mapa real (Problema dos hospitais de SP)
 - **Documentação**: README detalhado + documentação inline
 - **Testes**: Suite automatizada de validação
 
 ## ✨ Funcionalidades
 
 ### Core do Algoritmo Genético
-- **População adaptativa**: 2000 indivíduos com diversidade controlada
+- **População adaptativa**: Controlado via medical_tsp_config.json
 - **Operadores genéticos**: Crossover ordenado, mutação adaptativa
 - **Seleção inteligente**: Torneio e rank-based com awareness de diversidade
 - **Fases de execução**: Exploração inicial + Refinamento posterior
 - **Elitismo**: Preservação das melhores soluções
 
 ### Visualização e Interface
-- **Interface Pygame**: Visualização em tempo real da evolução
 - **Interface Streamlit**: Dashboard web interativo com mapas
-- **Suporte a mapas reais**: Integração com dados de hospitais de São Paulo
+- **Suporte a mapa real**: Integração com dados de hospitais de São Paulo
 - **Gráficos de evolução**: Acompanhamento do fitness ao longo das gerações
 
 ## 🏗 Arquitetura
@@ -61,14 +61,12 @@ medical-tsp-fiap/
 │   ├── config_manager.py
 │   └── base_restriction.py
 ├── restrictions/                   # Restrições implementadas
-│   ├── fuel_restriction.py        # Limite de combustível
 │   ├── vehicle_capacity_restriction.py  # Capacidade de pacientes
-│   ├── route_cost_restriction.py  # Custos de rota (pedágios)
 │   ├── multiple_vehicles.py       # Múltiplas ambulâncias
 │   ├── fixed_start_restriction.py # Início fixo (hospital)
 │   ├── forbidden_routes.py        # Rotas proibidas
 │   └── one_way_routes.py          # Rotas de mão única
-├── llm/                           # Integração com IA
+├── llm/                           # Integração com OpenIA
 │   └── llm_integration.py        # GPT para relatórios
 ├── utils/                         # Utilitários
 │   ├── draw_functions.py         # Funções de desenho
@@ -80,7 +78,6 @@ medical-tsp-fiap/
 │   └── benchmark_hospitals_sp.py # Hospitais de SP
 ├── config/                        # Configurações
 │   ├── medical_tsp_config.json   # Config principal
-│   └── route_cost.py             # Custos específicos
 ├── tests/                         # Testes automatizados
 │   ├── test_medical_tsp.py
 │   ├── test_ambulance_patient_tsp.py
@@ -90,11 +87,8 @@ medical-tsp-fiap/
 │   └── test_multiple_vehicles_integration.py
 ├── docs/
 │   └── restrictions/              # Documentação das restrições
-│       ├── fuel_restriction.md
 │       ├── forbidden_routes.md
 │       ├── one_way_routes.md
-│       └── route_cost_restriction.md
-├── main_tsp_medical.py           # App principal (Pygame)
 ├── medical_tsp_streamlit.py     # App web (Streamlit)
 ├── requirements.txt              # Dependências
 └── README.md                     
@@ -191,14 +185,7 @@ Limita a distância máxima e calcula custos de combustível.
 
 📖 [**Documentação Detalhada**](docs/restrictions/fuel_restriction.md)
 
-**Configuração:**
-- `max_distance`: Distância máxima em km (padrão: 250)
-- `fuel_cost_per_km`: Custo por km (padrão: 0.8)
-- `fuel_cost_limit`: Limite de custo total
-
----
-
-### 2. 🚗 Capacidade do Veículo
+### 1. 🚗 Capacidade do Veículo
 Limita o número de pacientes por veículo.
 
 **Configuração:**
@@ -207,18 +194,7 @@ Limita o número de pacientes por veículo.
 
 ---
 
-### 3. 💰 Custo de Rotas (Pedágios)
-Adiciona custos específicos para certas rotas.
-
-📖 [**Documentação Detalhada**](docs/restrictions/route_cost_restriction.md)
-
-**Configuração:**
-- `route_cost_dict`: Dicionário com custos por rota
-- Simula pedágios, taxas de travessia, etc.
-
----
-
-### 4. 🚑 Múltiplos Veículos
+### 2. 🚑 Múltiplos Veículos
 Distribui pacientes entre várias ambulâncias.
 
 **Configuração:**
@@ -228,7 +204,7 @@ Distribui pacientes entre várias ambulâncias.
 
 ---
 
-### 5. 🏥 Início Fixo (Hospital)
+### 3. 🏥 Início Fixo (Hospital)
 Força as rotas a começarem no hospital.
 
 **Configuração:**
@@ -237,7 +213,7 @@ Força as rotas a começarem no hospital.
 
 ---
 
-### 6. 🚫 Rotas Proibidas
+### 4. 🚫 Rotas Proibidas
 Define rotas que não podem ser utilizadas.
 
 📖 [**Documentação Detalhada**](docs/restrictions/forbidden_routes.md)
@@ -248,7 +224,7 @@ Define rotas que não podem ser utilizadas.
 
 ---
 
-### 7. ➡️ Rotas Unidirecionais (Mão Única)
+### 5. ➡️ Rotas Unidirecionais (Mão Única)
 Define rotas que só podem ser percorridas em uma direção.
 
 📖 [**Documentação Detalhada**](docs/restrictions/one_way_routes.md)
