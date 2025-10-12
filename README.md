@@ -528,7 +528,6 @@ Na interface Streamlit, você pode configurar restrições dinamicamente via sid
 python tests/test_medical_tsp.py
 
 # Testes específicos
-python tests/test_ambulance_patient_tsp.py
 python tests/test_capacity_integration.py
 python tests/test_forbidden_routes.py
 python tests/test_one_way_routes.py
@@ -570,7 +569,6 @@ Se não configurar a API key, o sistema funciona normalmente com respostas pré-
 ### Resultados Típicos
 - **ATT48**: Convergência em ~1000 gerações
 - **Hospitais SP**: Otimização efetiva com restrições reais
-- **Performance**: ~30 FPS na visualização Pygame
 
 ## 📝 Licença
 
