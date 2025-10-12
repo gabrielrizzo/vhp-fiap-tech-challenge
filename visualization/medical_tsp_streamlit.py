@@ -194,7 +194,7 @@ class MedicalRouteTSP:
             print("  + Fixed start restriction added")
  
         if multiple_vehicles_enabled:
-            vehicle_capacity = max_patients if capacity_enabled else 1
+            vehicle_capacity = max_patients if capacity_enabled else 0
  
             multiple_vehicles_restriction = MultipleVehiclesRestriction(
                 max_vehicles=max_vehicles_count,

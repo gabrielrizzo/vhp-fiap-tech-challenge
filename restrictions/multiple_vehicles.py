@@ -36,7 +36,15 @@ class MultipleVehiclesRestriction(BaseRestriction):
         super().__init__("multiple_vehicles_restriction")
         self.max_vehicles = max_vehicles
         self.depot = depot
-        self.vehicle_capacity = vehicle_capacity
+
+        if(vehicle_capacity < 1 or vehicle_capacity == None):
+            #Criando capacidade ótima para cada veículo
+            #TODO: alterar para calcular dinamicamente o número de cidades do problema
+            qtd_cidades = 48
+            self.vehicle_capacity = -(-qtd_cidades // max_vehicles)
+        else:
+            self.vehicle_capacity = vehicle_capacity
+
         self.vehicle_routes: Dict[int, List[Tuple[float, float]]] = {}
         self.vehicle_times: Dict[int, float] = {}
         

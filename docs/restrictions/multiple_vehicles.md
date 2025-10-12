@@ -19,6 +19,7 @@ O sistema distribui pacientes sequencialmente entre veículos:
 - Pacientes são atribuídos respeitando a ordem da rota
 - Cada veículo cria sua própria rota: depósito → pacientes → depósito
 - Algoritmo do vizinho mais próximo otimiza cada rota individual
+- *Caso a capacidade do veículo não seja informada, é realizado um calculo para definir uma capacidade ótima para cada veículo vehicle_capacity = -(-qtd_cidades // max_vehicles)*
 
 ### Penalização
 Quando uma solução excede os limites da frota:
