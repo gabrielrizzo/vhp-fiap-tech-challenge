@@ -580,7 +580,7 @@ Projeto acadêmico - FIAP Tech Challenge Fase 2 - IA para Devs
 
 ---
 
-# Exemplo de resultados
+# Exemplo de resultados - Todas restrições habilitadas
 
 ## ATT 48
 Obtivemos resultados expressivos com uma população de 500 indivíduos com limite de geração de 2000
