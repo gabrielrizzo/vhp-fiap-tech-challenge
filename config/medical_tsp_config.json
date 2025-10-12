@@ -7,8 +7,8 @@
         "plot_x_offset": 450
     },
     "genetic_algorithm": {
-        "population_size": 200,
-        "generation_limit": 200,
+        "population_size": 500,
+        "generation_limit": 2000,
         "n_cities": 48,
         "n_exploration_generation": 1000,
         "n_neighbors": 5
