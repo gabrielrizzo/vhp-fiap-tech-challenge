@@ -42,7 +42,6 @@
         },
         "forbidden_routes": {
             "enabled": true,
-            "base_distance_penalty": 1000.0,
             "weight": 1.0,
             "routes": [
                 {"from": 0, "to": 5},
@@ -52,7 +51,6 @@
         },
         "one_way_routes": {
             "enabled": true,
-            "base_distance_penalty": 1000.0,
             "weight": 1.0,
             "routes": [
                 {"from": 1, "to": 2},
