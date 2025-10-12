@@ -15,8 +15,6 @@ matplotlib.use('Agg')  # Use non-interactive backend
 from core.enhanced_genetic_algorithm import EnhancedGeneticAlgorithm
 from core.restriction_manager import RestrictionManager
 from core.config_manager import ConfigManager
-from restrictions.fuel_restriction import FuelRestriction
-from restrictions.route_cost_restriction import RouteCostRestriction
 from restrictions.vehicle_capacity_restriction import VehicleCapacityRestriction
 from restrictions.multiple_vehicles import MultipleVehiclesRestriction
 from restrictions.forbidden_routes import ForbiddenRoutes
@@ -31,8 +29,6 @@ from utils.helper_functions import (
 )
 from data.benchmark_att48 import att_48_cities_locations, att_48_cities_order
 from data.benchmark_hospitals_sp import hospitals_sp_data
-from config.route_cost import route_costs_att_48
-from config.route_cost import route_costs_hospital_sp
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -136,10 +132,8 @@ class MedicalRouteTSP:
         # IMPORTANTE: Limpa todas as restrições antes de adicionar novas
         self.ga.restriction_manager.restrictions = []
  
-        fuel_config = self.config.get("restrictions.fuel", {})
         capacity_config = self.config.get("restrictions.vehicle_capacity", {})
         hospital_config = self.config.get("restrictions.fixed_start", {})
-        route_cost_config = self.config.get("restrictions.route_cost", {})
         multiple_vehicles_config = self.config.get("restrictions.multiple_vehicles", {})
         forbidden_routes_config = self.config.get("restrictions.forbidden_routes", {})
         one_way_routes_config = self.config.get("restrictions.one_way_routes", {})
@@ -152,10 +146,7 @@ class MedicalRouteTSP:
             multiple_vehicles_enabled = self.sidebar_config.get('multiple_vehicles_enabled', False)
             forbidden_routes_enabled = self.sidebar_config.get('forbidden_routes_enabled', False)
             one_way_routes_enabled = self.sidebar_config.get('one_way_routes_enabled', False)
- 
-            fuel_max_distance = self.sidebar_config.get('fuel_max_distance', 250.0)
-            fuel_cost_per_km = self.sidebar_config.get('fuel_cost_per_km', 0.8)
-            fuel_cost_limit = self.sidebar_config.get('fuel_cost_limit', 300.0)
+
             max_patients = self.sidebar_config.get('max_capacity', 10)
             max_vehicles_count = self.sidebar_config.get('max_vehicles', 5)
             forbidden_routes_penalty = self.sidebar_config.get('forbidden_routes_penalty', 1000.0)
@@ -175,9 +166,6 @@ class MedicalRouteTSP:
             forbidden_routes_enabled = forbidden_routes_config.get("enabled", True)
             one_way_routes_enabled = one_way_routes_config.get("enabled", True)
  
-            fuel_max_distance = fuel_config.get("max_distance", 250.0)
-            fuel_cost_per_km = fuel_config.get("fuel_cost_per_km", 0.8)
-            fuel_cost_limit = fuel_config.get("fuel_cost_limit", None)
             max_patients = capacity_config.get("max_capacity", 10)
             max_vehicles_count = multiple_vehicles_config.get("max_vehicles", 5)
             forbidden_routes_penalty = forbidden_routes_config.get("base_distance_penalty", 1000.0)
@@ -210,7 +198,7 @@ class MedicalRouteTSP:
  
             multiple_vehicles_restriction = MultipleVehiclesRestriction(
                 max_vehicles=max_vehicles_count,
-                depot=self.cities_locations[0] if fixed_start_enabled else None,
+                depot=self.cities_locations[0],
                 vehicle_capacity=vehicle_capacity
             )
             multiple_vehicles_restriction.set_weight(multiple_vehicles_config.get("weight", 2.0))
@@ -1238,7 +1226,7 @@ if next_gen and st.session_state.generation < optimizer.GENERATION_LIMIT:
     
         optimizer.update_mutation_parameters()
         optimizer.print_generation_info(generation, best_fitness, current_diversity, stats)
-    
+
     if generation >= optimizer.GENERATION_LIMIT:
         st.success('Generation limit reached. Stopping algorithm')
         optimizer.final_report()

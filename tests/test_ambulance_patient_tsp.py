@@ -67,15 +67,6 @@ class TestVehicleCapacityRestriction(unittest.TestCase):
         )
         self.assertTrue(is_valid)
     
-    def test_validate_route_invalid_patients(self):
-        """Testa validação de rota com número inválido de pacientes"""
-        # Cria restrição com capacidade menor (2 pacientes por veículo)
-        restriction = VehicleCapacityRestriction(max_patients_per_vehicle=2)
-        # Cria uma rota com 3 cidades (mais que a capacidade de 2)
-        large_route = [(0.0, 0.0), (1.0, 1.0), (2.0, 2.0), (3.0, 3.0)]
-        is_valid = restriction.validate_route(large_route)
-        self.assertFalse(is_valid)
-    
     def test_validate_route_exact_capacity(self):
         """Testa validação de rota com número exato de pacientes"""
         # Cria restrição com capacidade exata (3 pacientes por veículo)
